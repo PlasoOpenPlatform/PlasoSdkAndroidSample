@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
+import android.os.PersistableBundle
 import android.text.TextUtils
 import android.view.View
 import android.view.View.GONE
@@ -27,19 +28,18 @@ class LiveClassLaunchActivity : AppCompatActivity(), CompoundButton.OnCheckedCha
     private var meetingType: String = "video"
     private var videoStream: Int = -1;
     private var userType: String = "listener"
-    private var isNewProtocol = true
     private var openFileMode = UpimeConfig.OPEN_FILE_MODE_WINDOW
     private var enableBlueTooth = false
     private var enablePptInteract = false
     private var undoSupport = false
-    private var useNewSmallBoard =  false;
+    private var useNewSmallBoard = false;
     private var useMeetingMode = false;
     private var supportSelect = true;
-    private var teachToolTypes : Int = 0
+    private var teachToolTypes: Int = 0
     private var toolBoxItems: Int = 0
     private var rtcType: Int = 2
-    private var sharedPreferences : SharedPreferences? = null
-    private var editor : SharedPreferences.Editor? = null
+    private var sharedPreferences: SharedPreferences? = null
+    private var editor: SharedPreferences.Editor? = null
     private var MEETING_ID: String = "meeting_id"
     private var LOGIN_NAME: String = "login_name"
     private var ONLINE_MODE: String = "online_mode"
@@ -53,7 +53,7 @@ class LiveClassLaunchActivity : AppCompatActivity(), CompoundButton.OnCheckedCha
     private var isAuxiliaryCamera = true;
     private var isNewPpt = false;
     private var logLevel = UpimeParameter.INFO;
-    private var teachingList : MutableList<WebviewObject> = ArrayList(16)
+    private var teachingList: MutableList<WebviewObject> = ArrayList(16)
 
     private var ids = arrayOf(
         R.id.triangle_key,
@@ -86,13 +86,6 @@ class LiveClassLaunchActivity : AppCompatActivity(), CompoundButton.OnCheckedCha
 
         openFileMode = intent.getIntExtra("OpenFileMode", UpimeConfig.OPEN_FILE_MODE_IMAGE)
         toolBoxItems = intent.getIntExtra("ToolBoxItem", 0)
-        rgAppId.setOnCheckedChangeListener { group, checkedId ->
-            when (checkedId) {
-                R.id.rbNewAppId -> isNewProtocol = true
-                R.id.rbOldAppId -> isNewProtocol = false
-            }
-            onProtocolChange()
-        }
         var meettype = sharedPreferences?.getString(MEETING_TYPE, "video")
         if ("video".equals(meettype)) {
             rgMeetingType.check(R.id.rbVideo)
@@ -108,7 +101,7 @@ class LiveClassLaunchActivity : AppCompatActivity(), CompoundButton.OnCheckedCha
 
         rgMeetingType.setOnCheckedChangeListener { group, checkedId ->
             when (checkedId) {
-                R.id.rbVideo ->{
+                R.id.rbVideo -> {
                     meetingType = "video"
                     switchVideoStream.visibility = VISIBLE
                 }
@@ -162,7 +155,7 @@ class LiveClassLaunchActivity : AppCompatActivity(), CompoundButton.OnCheckedCha
         }
 
         switchVideoStream.setOnCheckedChangeListener { buttonView, isChecked ->
-            videoStream = if (isChecked)  18 else -1
+            videoStream = if (isChecked) 18 else -1
         }
 
         ppt_interact.setOnCheckedChangeListener { btn, isChecked ->
@@ -203,11 +196,11 @@ class LiveClassLaunchActivity : AppCompatActivity(), CompoundButton.OnCheckedCha
             } else {
                 isPhoneTeachingMethod = false;
             }
-            tv_auxiliary_cam.visibility = if(isPhoneTeachingMethod) VISIBLE else GONE;
-            axuiliary_cam.visibility = if(isPhoneTeachingMethod) VISIBLE else GONE;
+            tv_auxiliary_cam.visibility = if (isPhoneTeachingMethod) VISIBLE else GONE;
+            axuiliary_cam.visibility = if (isPhoneTeachingMethod) VISIBLE else GONE;
         }
 
-        resident_camera.setOnCheckedChangeListener{ btn, isChecked ->
+        resident_camera.setOnCheckedChangeListener { btn, isChecked ->
             if (isChecked) {
                 isResidentCamera = true;
             } else {
@@ -215,7 +208,7 @@ class LiveClassLaunchActivity : AppCompatActivity(), CompoundButton.OnCheckedCha
             }
         }
 
-        axuiliary_cam.setOnCheckedChangeListener{ btn, isChecked ->
+        axuiliary_cam.setOnCheckedChangeListener { btn, isChecked ->
             if (isChecked) {
                 isAuxiliaryCamera = true;
             } else {
@@ -233,7 +226,7 @@ class LiveClassLaunchActivity : AppCompatActivity(), CompoundButton.OnCheckedCha
         }
 
         sc_log_level.setOnCheckedChangeListener { btn, isChecked ->
-            rg_log_level.visibility = if(isChecked) VISIBLE else GONE;
+            rg_log_level.visibility = if (isChecked) VISIBLE else GONE;
         }
 
         initCheckBox()
@@ -284,113 +277,78 @@ class LiveClassLaunchActivity : AppCompatActivity(), CompoundButton.OnCheckedCha
     }
 
     private fun launchLiveClass() {
-        var parameter : UpimeParameter = UpimeParameter()
+        var parameter: UpimeParameter = UpimeParameter()
         parameter.waterMark = "liveclassdemo"
         parameter.logLevel = logLevel
         DemoApp.upime.setUpimeParameter(parameter)
-        if (isNewProtocol) {
-            val query = getQuery()
 
-            if (query != null) {
-                val config = ClassConfig().also {
-                    if (TextUtils.isEmpty(hostaddr.text)) {
-                        it.classURL = query
-                    } else {
-                        it.classURL = hostaddr.text.toString() + "?" + query
-                    }
-                    it.host = Config.server
-                    it.features =
-                        VIDEO_MARK or SMALL_BOARD or RED_PACKET or CAST or QIANGDAQI or TOUZI
-
-                    it.openFileMode = openFileMode
-                    it.toolboxItems = toolBoxItems
-
-                    val keyForColor = etColor.text.toString().trim()
-                    if (!TextUtils.isEmpty(keyForColor)) {
-                        it.keyForColor = keyForColor
-                    }
-                    it.supportBlueToothConnect = enableBlueTooth
-                    it.enableInteractPpt = enablePptInteract
-                    it.teachToolTypes = teachToolTypes
-                    it.supportUndo = undoSupport
-                    it.useNewSmallBoard = useNewSmallBoard
-                    it.supportSelect = supportSelect;
-                    it.endRemindTime = remindTime.text.toString().toInt()
-                    var limitnum = 0
-                    if (!TextUtils.isEmpty(redPacketLimit.text?.toString())) {
-                        limitnum = redPacketLimit.text.toString().toInt()
-                    }
-                    if (limitnum > 0) {
-                        it.redPacketLimit = limitnum;
-                    }
-                    if (useMeetingMode && TextUtils.isDigitsOnly(etPermission.text.toString())) {
-                        it.defaultPermission = etPermission.text.toString().toInt()
-                    }
-                    if (isPhoneTeachingMethod) {
-                        it.mobileTeaching = true;
-                    }
-                    it.residentCamera = isResidentCamera;
-                    it.auxiliaryCamera = isAuxiliaryCamera;
-                    it.userNPPT = isNewPpt
-                    teachingList.add(
-                        WebviewObject(
-                            WebviewObject.TYPE_TEACH_MATERIAL,
-                            "http://www.baidu.com",
-                            "测试消息,打开百度"
-                        )
-                    );
-                    teachingList.add(
-                        WebviewObject(
-                            2,
-                            "http://www.bing.com",
-                            "测试消息,打开bing"
-                        )
-                    );
-                    it.webviewList = teachingList;
+        val query = getQuery()
+        if (query != null) {
+            val config = ClassConfig().also {
+                if (TextUtils.isEmpty(hostaddr.text)) {
+                    it.classURL = query
+                } else {
+                    it.classURL = hostaddr.text.toString() + "?" + query
                 }
-                DemoApp.upime.launchLiveClass(config, object : ILiveClassListener {
-                    override fun onLiveClassReady(upimeBoard: UpimeBoard?) {
-                        DemoApp.upimeBoard = upimeBoard
-                    }
+                it.host = Config.server
 
-                    override fun onExited(exitCode: Int, mid: String) {
-                    }
+                it.openFileMode = openFileMode
+                it.toolboxItems = toolBoxItems
 
-                    override fun onSkinChanged(skinId: Int) {
-                    }
-
-                })
+                val keyForColor = etColor.text.toString().trim()
+                if (!TextUtils.isEmpty(keyForColor)) {
+                    it.keyForColor = keyForColor
+                }
+                it.supportBlueToothConnect = enableBlueTooth
+                it.enableInteractPpt = enablePptInteract
+                it.teachToolTypes = teachToolTypes
+                it.supportUndo = undoSupport
+                it.useNewSmallBoard = useNewSmallBoard
+                it.supportSelect = supportSelect;
+                it.endRemindTime = remindTime.text.toString().toInt()
+                var limitnum = 0
+                if (!TextUtils.isEmpty(redPacketLimit.text?.toString())) {
+                    limitnum = redPacketLimit.text.toString().toInt()
+                }
+                if (limitnum > 0) {
+                    it.redPacketLimit = limitnum;
+                }
+                if (useMeetingMode && TextUtils.isDigitsOnly(etPermission.text.toString())) {
+                    it.defaultPermission = etPermission.text.toString().toInt()
+                }
+                if (isPhoneTeachingMethod) {
+                    it.mobileTeaching = true;
+                }
+                it.residentCamera = isResidentCamera;
+                it.auxiliaryCamera = isAuxiliaryCamera;
+                teachingList.add(
+                    WebviewObject(
+                        WebviewObject.TYPE_TEACH_MATERIAL,
+                        "http://www.baidu.com",
+                        "测试消息,打开百度"
+                    )
+                );
+                teachingList.add(
+                    WebviewObject(
+                        2,
+                        "http://www.bing.com",
+                        "测试消息,打开bing"
+                    )
+                );
+                it.webviewList = teachingList;
             }
-        } else {
-            var intent = Intent(this, upimeActivity::class.java)
-            if (TextUtils.isEmpty(etMeetingId.text)) {
-                Toast.makeText(this, "地址为空", Toast.LENGTH_SHORT).show()
-                return
-            }
-            if ("listener".equals(userType)) {
-                //intent.putExtra(upimeActivity.EXTRA_URL,"https://wwwr.plaso.cn/static/sdk/styleupime/5.00/?appId=sdk&appType=liveclassSDK&beginTime=1618556752&cloudDisk=false&live=1&mediaType=video&meetingId=test111113&meetingType=public&userName=hello&userType=listener&validTime=10800&signature=534C1D24E94AA000CCDB2C1EC3D2469F3826F949");
-                intent.putExtra(upimeActivity.EXTRA_URL, etMeetingId.text.toString())
-                //老协议4:3, 没有适配平板端，所以只支持false.
-                intent.putExtra(upimeActivity.EXTRA_IS_PAD, false)
-                applicationContext.startActivity(intent)
-            } else {
-                Toast.makeText(this, "不支持类型 " + userType, Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
+            DemoApp.upime.launchLiveClass(config, object : ILiveClassListener {
+                override fun onLiveClassReady(upimeBoard: UpimeBoard?) {
+                    DemoApp.upimeBoard = upimeBoard
+                }
 
-    private fun onProtocolChange() {
-        if (isNewProtocol) {
-            rbSpeaker.visibility = VISIBLE
-            rbAssistant.visibility = VISIBLE
-        } else {
-            rbSpeaker.visibility = GONE
-            rbAssistant.visibility = GONE
-            etMeetingId.setHint("请输入老协议地址:")
-            etName.visibility = GONE
-            etOnlineMode.visibility = GONE
-            etColor.visibility = GONE
-            rbListener.isChecked = true
+                override fun onExited(exitCode: Int, mid: String) {
+                }
+
+                override fun onSkinChanged(skinId: Int) {
+                }
+
+            })
         }
     }
 
@@ -409,6 +367,13 @@ class LiveClassLaunchActivity : AppCompatActivity(), CompoundButton.OnCheckedCha
             return null
         }
         editor?.putString(LOGIN_NAME, userName)
+
+        val _endTime = endTime.text.toString().toInt()
+        if (_endTime > 0 && System.currentTimeMillis() / 1000 > _endTime) {
+            //TODO提示
+            endTime.error = "endTime needs to be greater than startTime"
+            return null
+        }
 
         val onlineMode = etOnlineMode.text.toString()
 
@@ -450,7 +415,7 @@ class LiveClassLaunchActivity : AppCompatActivity(), CompoundButton.OnCheckedCha
             it["appType"] = "liveclassSDK"
             it["beginTime"] = System.currentTimeMillis() / 1000
             if (endTime.text.toString().toInt() > 0) {
-                it["endTime"] = endTime.text.toString().toInt()
+                it["endTime"] = _endTime
             }
             it["mediaType"] = meetingType
             it["meetingId"] = meetingId
@@ -471,11 +436,15 @@ class LiveClassLaunchActivity : AppCompatActivity(), CompoundButton.OnCheckedCha
             it["vendorType"] = rtcType
         }
         var gson = Gson()
-        var info : String = gson.toJson(params)
+        var info: String = gson.toJson(params)
         editor?.putString("params", info)
 
         editor?.apply()
         return SignHelper.sign(params, Config.appKey)
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?, persistentState: PersistableBundle?) {
+        super.onCreate(savedInstanceState, persistentState)
     }
 
     override fun onCheckedChanged(buttonView: CompoundButton?, isChecked: Boolean) {

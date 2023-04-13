@@ -135,7 +135,6 @@ class MiniLessonBrowserActivity : AppCompatActivity() {
 
     private fun startMiniLesson(lessonInfoWrap: LessonInfoWrap?) {
         val config = MiniLessonConfig()
-        // config.openFileMode = openFileMode
         if (lessonInfoWrap == null) {
             if (!TextUtils.isEmpty(mini_title.text.toString())) {
                 config.topic = mini_title.text.toString()      //"微课测试_" + Random(System.currentTimeMillis()).nextInt()
@@ -162,8 +161,7 @@ class MiniLessonBrowserActivity : AppCompatActivity() {
         config.recordType = recordType
         config.enableInteractPpt = enablePptInteract
 
-        config.keyForColor = miniLessonViewModel.configKey
-        config.userNPPT = isNewPpt
+//        config.keyForColor = miniLessonViewModel.configKey
 
         var extraJson = JSONObject()
         extraJson.put("id", "weikebao_id1");

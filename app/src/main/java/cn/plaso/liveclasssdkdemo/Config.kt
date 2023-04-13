@@ -27,4 +27,5 @@ object Config {
      * appKey
      */
     var appKey:String = ""
+
 }
