@@ -13,19 +13,15 @@ object Config {
             "      \"region\": \"oss-cn-hangzhou\",\n" +
             "      \"domain\": \"aliyuncs.com\"\n" +
             "    }"
-    var server = "https://www.plaso.cn"
-
-    const val oldServerPrefix = "https://dev.plaso.cn/static/yxtsdk/?"
+    var server = "https://dev.plaso.cn"
 
     /**
      * the appId get from plaso
      */
     var appId: String = ""
 
-
     /**
      * appKey
      */
     var appKey:String = ""
-
 }

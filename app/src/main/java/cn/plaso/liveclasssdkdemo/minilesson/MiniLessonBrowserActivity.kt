@@ -5,10 +5,15 @@ import android.text.Editable
 import android.text.TextUtils
 import android.text.TextWatcher
 import android.util.Log
+import android.widget.Button
+import android.widget.EditText
+import android.widget.RadioGroup
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.SwitchCompat
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.SimpleItemAnimator
 import cn.plaso.liveclasssdkdemo.Config
 import cn.plaso.liveclasssdkdemo.DemoApp
@@ -17,10 +22,6 @@ import cn.plaso.liveclasssdkdemo.R
 import cn.plaso.liveclasssdkdemo.SignHelper
 import cn.plaso.liveclasssdkdemo.liveclass.LiveClassLaunchActivity
 import cn.plaso.upime.*
-import kotlinx.android.synthetic.main.activity_liveclass_launch.*
-import kotlinx.android.synthetic.main.activity_mini_lesson_browser.*
-import kotlinx.android.synthetic.main.activity_mini_lesson_browser.sc_new_ppt
-import kotlinx.android.synthetic.main.activity_mini_lesson_browser.teach_tool_switch
 import org.json.JSONObject
 import java.io.File
 
@@ -40,6 +41,18 @@ class MiniLessonBrowserActivity : AppCompatActivity() {
     private var toolBoxItems = UpimeConfig.ToolBoxItem.ALL.value
     private var recordType = MiniLessonConfig.RECORD_TYPE_AUDIO
     // private var openFileMode = UpimeConfig.OPEN_FILE_MODE_IMAGE
+
+    private lateinit var btnCreateMiniLesson: Button
+    private lateinit var rvMiniLessonList: RecyclerView
+    private lateinit var teach_tool_switch: SwitchCompat
+
+    private lateinit var undo_switch: SwitchCompat
+    private lateinit var save_draft_switch: SwitchCompat
+    private lateinit var interact_ppt: SwitchCompat
+    private lateinit var recordtype: RadioGroup
+    private lateinit var sc_new_ppt: SwitchCompat
+    private lateinit var config_key: EditText
+    private lateinit var mini_title: EditText
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_mini_lesson_browser)
@@ -51,6 +64,7 @@ class MiniLessonBrowserActivity : AppCompatActivity() {
             adapter.lessonList = it
             adapter.notifyDataSetChanged()
         })
+        btnCreateMiniLesson = findViewById(R.id.btnCreateMiniLesson)
         btnCreateMiniLesson.setOnClickListener {
             startMiniLesson(null)
         }
@@ -70,26 +84,32 @@ class MiniLessonBrowserActivity : AppCompatActivity() {
             }
         }
 
+        rvMiniLessonList = findViewById(R.id.rvMiniLessonList)
         rvMiniLessonList.layoutManager = GridLayoutManager(this, 3)
         rvMiniLessonList.adapter = adapter
         (rvMiniLessonList.itemAnimator as SimpleItemAnimator).supportsChangeAnimations = false
 
-        teach_tool_switch.setOnCheckedChangeListener { btn, isChecked ->
-            teachToolTypes = if (isChecked) LiveClassLaunchActivity.TeacherToolType.PureUpimeTeachToolTypeAll.value else 0
-        }
+       teach_tool_switch = findViewById(R.id.teach_tool_switch)
+       teach_tool_switch.setOnCheckedChangeListener { btn, isChecked ->
+           teachToolTypes = if (isChecked) LiveClassLaunchActivity.TeacherToolType.PureUpimeTeachToolTypeAll.value else 0
+       }
 
-        undo_switch.setOnCheckedChangeListener { btn, isChecked ->
-            supportUndo = isChecked
-        }
+       undo_switch = findViewById(R.id.undo_switch)
+       undo_switch.setOnCheckedChangeListener { btn, isChecked ->
+           supportUndo = isChecked
+       }
 
-        save_draft_switch.setOnCheckedChangeListener { btn, isChecked ->
-            supportSaveDraft = isChecked
-        }
+        save_draft_switch = findViewById(R.id.save_draft_switch)
+       save_draft_switch.setOnCheckedChangeListener { btn, isChecked ->
+           supportSaveDraft = isChecked
+       }
 
+        interact_ppt = findViewById(R.id.interact_ppt)
         interact_ppt.setOnCheckedChangeListener { btn, isChecked ->
             enablePptInteract = isChecked
         }
 
+        recordtype = findViewById(R.id.recordtype)
         recordtype.setOnCheckedChangeListener { group, checkedId ->
             when (checkedId) {
                 R.id.rbAudioType -> {
@@ -100,6 +120,7 @@ class MiniLessonBrowserActivity : AppCompatActivity() {
                 }
             }
         }
+        sc_new_ppt = findViewById(R.id.sc_new_ppt)
         sc_new_ppt.setOnCheckedChangeListener { btn, isChecked ->
             if (isChecked) {
                 isNewPpt = true;
@@ -108,6 +129,7 @@ class MiniLessonBrowserActivity : AppCompatActivity() {
             }
         }
 
+        config_key = findViewById(R.id.config_key)
         config_key.setText(miniLessonViewModel.configKey)
 
         config_key.addTextChangedListener(object: TextWatcher {
@@ -125,8 +147,9 @@ class MiniLessonBrowserActivity : AppCompatActivity() {
             }
 
         });
+        mini_title = findViewById(R.id.mini_title)
 
-    }
+   }
 
     override fun onResume() {
         super.onResume()
@@ -135,6 +158,7 @@ class MiniLessonBrowserActivity : AppCompatActivity() {
 
     private fun startMiniLesson(lessonInfoWrap: LessonInfoWrap?) {
         val config = MiniLessonConfig()
+       // config.openFileMode = openFileMode
         if (lessonInfoWrap == null) {
             if (!TextUtils.isEmpty(mini_title.text.toString())) {
                 config.topic = mini_title.text.toString()      //"微课测试_" + Random(System.currentTimeMillis()).nextInt()
@@ -142,7 +166,7 @@ class MiniLessonBrowserActivity : AppCompatActivity() {
                 //config.topic = "微课测试_" + Random(System.currentTimeMillis()).nextInt()
             }
             config.draftPath =
-                "${getExternalFilesDir(null)?.absolutePath}/mini/${System.currentTimeMillis()}"
+                    "${getExternalFilesDir(null)?.absolutePath}/mini/${System.currentTimeMillis()}"
         } else {
             config.topic = lessonInfoWrap.lessonInfo.topic
             config.draftPath = lessonInfoWrap.lessonInfo.path
@@ -161,7 +185,10 @@ class MiniLessonBrowserActivity : AppCompatActivity() {
         config.recordType = recordType
         config.enableInteractPpt = enablePptInteract
 
-//        config.keyForColor = miniLessonViewModel.configKey
+        config.keyForColor = miniLessonViewModel.configKey
+        config.pptType = if (DemoApp.newPPt) UpimeObject.TYPE_DX_PPT  else UpimeObject.TYPE_PPT
+        config.fobiddenRecordScreen = true;
+        config.supportHighlighter = DemoApp.sp.getBoolean("supportHighlighter", false)
 
         var extraJson = JSONObject()
         extraJson.put("id", "weikebao_id1");
@@ -207,7 +234,7 @@ class MiniLessonBrowserActivity : AppCompatActivity() {
                 SignHelper.sign(map, Config.appKey)
             }
             it.ossParams =
-                GSON.fromJson(Config.ossToken, StsToken::class.java).toOssParams()
+                    GSON.fromJson(Config.ossToken, StsToken::class.java).toOssParams()
 
         }
         DemoApp.upime.uploadMiniLesson(params, object : IUploadListener {

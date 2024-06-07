@@ -1,7 +1,6 @@
 package cn.plaso.liveclasssdkdemo.liveclass
 
 import android.content.Context
-import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.os.PersistableBundle
@@ -9,19 +8,27 @@ import android.text.TextUtils
 import android.view.View
 import android.view.View.GONE
 import android.view.View.VISIBLE
+import android.widget.Button
+import android.widget.CheckBox
 import android.widget.CompoundButton
+import android.widget.EditText
+import android.widget.LinearLayout
 import android.widget.RadioButton
-import android.widget.Toast
+import android.widget.RadioGroup
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.SwitchCompat
 import cn.plaso.liveclasssdkdemo.Config
 import cn.plaso.liveclasssdkdemo.DemoApp
 import cn.plaso.liveclasssdkdemo.R
 import cn.plaso.liveclasssdkdemo.SignHelper
-import cn.plaso.upime.*
-import cn.plaso.upime.ClassConfig.*
+import cn.plaso.upime.ClassConfig
+import cn.plaso.upime.ILiveClassListener
+import cn.plaso.upime.UpimeBoard
+import cn.plaso.upime.UpimeConfig
+import cn.plaso.upime.UpimeParameter
+import cn.plaso.upime.WebviewObject
 import com.google.gson.Gson
-import com.plaso.plasoliveclassandroidsdk.upimeActivity
-import kotlinx.android.synthetic.main.activity_liveclass_launch.*
 
 class LiveClassLaunchActivity : AppCompatActivity(), CompoundButton.OnCheckedChangeListener {
 
@@ -54,6 +61,16 @@ class LiveClassLaunchActivity : AppCompatActivity(), CompoundButton.OnCheckedCha
     private var isNewPpt = false;
     private var logLevel = UpimeParameter.INFO;
     private var teachingList: MutableList<WebviewObject> = ArrayList(16)
+    private var supportNewQuiz: Boolean = false // 是否支持新版随堂测；
+
+    private lateinit var etMeetingId: EditText
+    private lateinit var etName: EditText
+    private lateinit var rbSpeaker: RadioButton
+    private lateinit var rbAssistant: RadioButton
+    private lateinit var etOnlineMode: EditText
+    private lateinit var etColor: EditText
+    private lateinit var rbListener: RadioButton
+    private lateinit var rgVideoDimension: RadioGroup
 
     private var ids = arrayOf(
         R.id.triangle_key,
@@ -62,7 +79,10 @@ class LiveClassLaunchActivity : AppCompatActivity(), CompoundButton.OnCheckedCha
         R.id.line_key,
         R.id.dashline_key,
         R.id.square_key,
-        R.id.circle_key
+        R.id.circle_key,
+        R.id.arror_key,
+        R.id.fanshaped_key,
+        R.id.parallelogram_key,
     )
 
 
@@ -74,12 +94,24 @@ class LiveClassLaunchActivity : AppCompatActivity(), CompoundButton.OnCheckedCha
         PureUpimeTeachToolTypeDASHEDLINE(1 shl 4),
         PureUpimeTeachToolTypeSQUARE(1 shl 5),
         PureUpimeTeachToolTypeCIRCLE(1 shl 6),
-        PureUpimeTeachToolTypeAll(127)
+        PureUpimeTeachToolTypeARROR(1 shl 7),
+        PureUpimeTeachToolTypeFANSHAPED(1 shl 8),
+        PureUpimeTeachToolTypePARALLELOGRAM(1 shl 9),
+        PureUpimeTeachToolTypeAll(1023)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_liveclass_launch)
+
+        etName = findViewById(R.id.etName)
+        rbSpeaker = findViewById(R.id.rbSpeaker)
+        rbAssistant = findViewById(R.id.rbAssistant)
+        etOnlineMode = findViewById(R.id.etOnlineMode)
+        etColor = findViewById(R.id.etColor)
+        rbListener = findViewById(R.id.rbListener)
+        rgVideoDimension = findViewById(R.id.rgVideoDimension)
+        etMeetingId= findViewById<EditText>(R.id.etMeetingId)
 
         sharedPreferences = this.getSharedPreferences("default", Context.MODE_PRIVATE)
         editor = sharedPreferences?.edit()
@@ -88,32 +120,33 @@ class LiveClassLaunchActivity : AppCompatActivity(), CompoundButton.OnCheckedCha
         toolBoxItems = intent.getIntExtra("ToolBoxItem", 0)
         var meettype = sharedPreferences?.getString(MEETING_TYPE, "video")
         if ("video".equals(meettype)) {
-            rgMeetingType.check(R.id.rbVideo)
+            findViewById<RadioGroup>(R.id.rgMeetingType).check(R.id.rbVideo)
             meetingType = "video"
             videoStream = sharedPreferences?.getInt(VIDEO_STREAM, -1) ?: -1
             if (videoStream == 18) {
-                switchVideoStream.isChecked = true;
+                findViewById<SwitchCompat>(R.id.switchVideoStream).isChecked = true;
             }
         } else {
-            rgMeetingType.check(R.id.rbAudio)
+            findViewById<RadioGroup>(R.id.rgMeetingType).check(R.id.rbAudio)
             meetingType = "audio"
         }
 
-        rgMeetingType.setOnCheckedChangeListener { group, checkedId ->
+        findViewById<RadioGroup>(R.id.rgMeetingType).setOnCheckedChangeListener { group, checkedId ->
             when (checkedId) {
                 R.id.rbVideo -> {
                     meetingType = "video"
-                    switchVideoStream.visibility = VISIBLE
+                    findViewById<SwitchCompat>(R.id.switchVideoStream).visibility = VISIBLE
                 }
                 R.id.rbAudio -> {
                     meetingType = "audio"
-                    switchVideoStream.isChecked = false
-                    switchVideoStream.visibility = GONE
+                    findViewById<SwitchCompat>(R.id.switchVideoStream).isChecked = false
+                    findViewById<SwitchCompat>(R.id.switchVideoStream).visibility = GONE
                 }
             }
         }
 
         var usertype = sharedPreferences?.getString(ROLE, "listener")
+        var rgUserType = findViewById<RadioGroup>(R.id.rgUserType)
         if ("speaker".equals(usertype)) {
             rgUserType.check(R.id.rbSpeaker)
             userType = "speaker"
@@ -135,6 +168,7 @@ class LiveClassLaunchActivity : AppCompatActivity(), CompoundButton.OnCheckedCha
         }
 
         var res = sharedPreferences?.getString(DIMISSION, "1280x720");
+        var rgResolution = findViewById<RadioGroup>(R.id.rgResolution)
         if ("1280x720".equals(res)) {
             rgResolution.check(R.id.rb720)
             resolution = "1280x720"
@@ -146,87 +180,69 @@ class LiveClassLaunchActivity : AppCompatActivity(), CompoundButton.OnCheckedCha
             resolution = "968x762"
         }
 
-        btnEnterLiveClass.setOnClickListener {
+        findViewById<Button>(R.id.btnEnterLiveClass).setOnClickListener {
             launchLiveClass()
         }
 
-        blue_tooth_link.setOnCheckedChangeListener { btn, isChecked ->
+        findViewById<SwitchCompat>(R.id.blue_tooth_link).setOnCheckedChangeListener { btn, isChecked ->
             enableBlueTooth = isChecked
         }
 
-        switchVideoStream.setOnCheckedChangeListener { buttonView, isChecked ->
+        findViewById<SwitchCompat>(R.id.switchVideoStream).setOnCheckedChangeListener { buttonView, isChecked ->
             videoStream = if (isChecked) 18 else -1
         }
 
-        ppt_interact.setOnCheckedChangeListener { btn, isChecked ->
+        findViewById<SwitchCompat>(R.id.ppt_interact).setOnCheckedChangeListener { btn, isChecked ->
             enablePptInteract = isChecked
         }
 
-        undo_support_switch.setOnCheckedChangeListener { btn, isChecked ->
+        findViewById<SwitchCompat>(R.id.undo_support_switch).setOnCheckedChangeListener { btn, isChecked ->
             undoSupport = isChecked
         }
 
-        new_smallBoard.setOnCheckedChangeListener { btn, isChecked ->
+        findViewById<SwitchCompat>(R.id.new_smallBoard).setOnCheckedChangeListener { btn, isChecked ->
             useNewSmallBoard = isChecked
         }
 
-        selectSwitch.setOnCheckedChangeListener { btn, isChecked ->
+        findViewById<SwitchCompat>(R.id.selectSwitch).setOnCheckedChangeListener { btn, isChecked ->
             supportSelect = isChecked
         }
-
-        meeting_mode.setOnCheckedChangeListener { btn, isChecked ->
-            useMeetingMode = isChecked
-            if (isChecked) {
-                tvPermission.visibility = VISIBLE;
-                etPermission.visibility = VISIBLE;
-            } else {
-                tvPermission.visibility = GONE;
-                etPermission.visibility = GONE;
-            }
-        }
-
+        var teach_tool_switch = findViewById<SwitchCompat>(R.id.teach_tool_switch)
+        var layout_teach_tools = findViewById<LinearLayout>(R.id.layout_teach_tools)
         teach_tool_switch.setOnCheckedChangeListener { btn, isChecked ->
             layout_teach_tools.visibility = if (isChecked) VISIBLE else GONE
             teachToolTypes = if (isChecked) TeacherToolType.PureUpimeTeachToolTypeAll.value else 0
         }
 
+        var teaching_method = findViewById<SwitchCompat>(R.id.teaching_method)
+        var tv_auxiliary_cam = findViewById<TextView>(R.id.tv_auxiliary_cam)
+        var axuiliary_cam = findViewById<SwitchCompat>(R.id.axuiliary_cam)
         teaching_method.setOnCheckedChangeListener { btn, isChecked ->
-            if (isChecked) {
-                isPhoneTeachingMethod = true;
-            } else {
-                isPhoneTeachingMethod = false;
-            }
+            isPhoneTeachingMethod = isChecked;
             tv_auxiliary_cam.visibility = if (isPhoneTeachingMethod) VISIBLE else GONE;
             axuiliary_cam.visibility = if (isPhoneTeachingMethod) VISIBLE else GONE;
         }
 
+        var resident_camera = findViewById<SwitchCompat>(R.id.resident_camera)
         resident_camera.setOnCheckedChangeListener { btn, isChecked ->
-            if (isChecked) {
-                isResidentCamera = true;
-            } else {
-                isResidentCamera = false;
-            }
+            isResidentCamera = isChecked;
         }
 
         axuiliary_cam.setOnCheckedChangeListener { btn, isChecked ->
-            if (isChecked) {
-                isAuxiliaryCamera = true;
-            } else {
-                isAuxiliaryCamera = false;
-            }
+            isAuxiliaryCamera = isChecked;
         }
 
-        sc_new_ppt.setOnCheckedChangeListener { btn, isChecked ->
-            if (isChecked) {
-                isNewPpt = true;
-            } else {
-                isNewPpt = false;
-            }
+        findViewById<SwitchCompat>(R.id.sc_new_ppt).setOnCheckedChangeListener { btn, isChecked ->
+            isNewPpt = isChecked;
             DemoApp.newPPt = isNewPpt
         }
 
-        sc_log_level.setOnCheckedChangeListener { btn, isChecked ->
-            rg_log_level.visibility = if (isChecked) VISIBLE else GONE;
+        findViewById<SwitchCompat>(R.id.sc_log_level).setOnCheckedChangeListener { btn, isChecked ->
+            findViewById<RadioGroup>(R.id.rg_log_level).visibility = if (isChecked) VISIBLE else GONE;
+        }
+
+        findViewById<SwitchCompat>(R.id.sc_new_quiz).setOnCheckedChangeListener { btn, isChecked ->
+            supportNewQuiz = isChecked
         }
 
         initCheckBox()
@@ -262,25 +278,36 @@ class LiveClassLaunchActivity : AppCompatActivity(), CompoundButton.OnCheckedCha
 
     private fun initDefaultValue() {
         etMeetingId.setText(sharedPreferences?.getString(MEETING_ID, ""))
-        etName.setText(sharedPreferences?.getString(LOGIN_NAME, ""))
-        etOnlineMode.setText(sharedPreferences?.getString(ONLINE_MODE, "1"))
+        findViewById<EditText>(R.id.etName).setText(sharedPreferences?.getString(LOGIN_NAME, ""))
+        findViewById<EditText>(R.id.etOnlineMode).setText(sharedPreferences?.getString(ONLINE_MODE, "1"))
     }
 
     private fun initCheckBox() {
-        triangle_key.setOnCheckedChangeListener(this)
-        rect_key.setOnCheckedChangeListener(this)
-        ellipse_key.setOnCheckedChangeListener(this)
-        line_key.setOnCheckedChangeListener(this)
-        dashline_key.setOnCheckedChangeListener(this)
-        square_key.setOnCheckedChangeListener(this)
-        circle_key.setOnCheckedChangeListener(this)
+        findViewById<CheckBox>(R.id.triangle_key).setOnCheckedChangeListener(this)
+        findViewById<CheckBox>(R.id.rect_key).setOnCheckedChangeListener(this)
+        findViewById<CheckBox>(R.id.ellipse_key).setOnCheckedChangeListener(this)
+        findViewById<CheckBox>(R.id.line_key).setOnCheckedChangeListener(this)
+        findViewById<CheckBox>(R.id.dashline_key).setOnCheckedChangeListener(this)
+        findViewById<CheckBox>(R.id.square_key).setOnCheckedChangeListener(this)
+        findViewById<CheckBox>(R.id.circle_key).setOnCheckedChangeListener(this)
+        findViewById<CheckBox>(R.id.arror_key).setOnCheckedChangeListener(this)
+        findViewById<CheckBox>(R.id.fanshaped_key).setOnCheckedChangeListener(this)
+        findViewById<CheckBox>(R.id.parallelogram_key).setOnCheckedChangeListener(this)
     }
 
     private fun launchLiveClass() {
         var parameter: UpimeParameter = UpimeParameter()
         parameter.waterMark = "liveclassdemo"
         parameter.logLevel = logLevel
+        parameter.appId = Config.appId
+        val path: String = this.getExternalFilesDir("logs")!!.path
+        parameter.logDir = path
         DemoApp.upime.setUpimeParameter(parameter)
+        var hostaddr = findViewById<EditText>(R.id.hostaddr)
+        var etColor= findViewById<EditText>(R.id.etColor)
+        var remindTime= findViewById<EditText>(R.id.remindTime)
+        var redPacketLimit= findViewById<EditText>(R.id.redPacketLimit)
+        var etPermission= findViewById<EditText>(R.id.etPermission)
 
         val query = getQuery()
         if (query != null) {
@@ -336,6 +363,7 @@ class LiveClassLaunchActivity : AppCompatActivity(), CompoundButton.OnCheckedCha
                     )
                 );
                 it.webviewList = teachingList;
+                it.supportHighlighter = DemoApp.sp.getBoolean("supportHighlighter", false)
             }
             DemoApp.upime.launchLiveClass(config, object : ILiveClassListener {
                 override fun onLiveClassReady(upimeBoard: UpimeBoard?) {
@@ -368,6 +396,7 @@ class LiveClassLaunchActivity : AppCompatActivity(), CompoundButton.OnCheckedCha
         }
         editor?.putString(LOGIN_NAME, userName)
 
+        var endTime = findViewById<EditText>(R.id.endTime)
         val _endTime = endTime.text.toString().toInt()
         if (_endTime > 0 && System.currentTimeMillis() / 1000 > _endTime) {
             //TODO提示
@@ -395,6 +424,7 @@ class LiveClassLaunchActivity : AppCompatActivity(), CompoundButton.OnCheckedCha
             sharpness = "30"
         }
 
+        var rgResolution = findViewById<RadioGroup>(R.id.rgResolution)
         val resolutionId = rgResolution.checkedRadioButtonId
         /*if (resolutionId == R.id.rb360) {
             resolution = "480x360"
@@ -407,7 +437,7 @@ class LiveClassLaunchActivity : AppCompatActivity(), CompoundButton.OnCheckedCha
         }
         editor?.putString(DIMISSION, resolution)
 
-        val videoStream = if (meetingType == "video" && switchVideoStream.isChecked) 18 else -1
+        val videoStream = if (meetingType == "video" && findViewById<SwitchCompat>(R.id.switchVideoStream).isChecked) 18 else -1
         editor?.putInt(VIDEO_STREAM, videoStream)
 
         val params = mutableMapOf<String, Any>().also {
@@ -430,10 +460,8 @@ class LiveClassLaunchActivity : AppCompatActivity(), CompoundButton.OnCheckedCha
             if (videoStream != -1) {
                 it["videoStream"] = videoStream
             }
-            if (!TextUtils.isEmpty(vendorType.text) && TextUtils.isDigitsOnly(vendorType.text)) {
-                rtcType = Integer.parseInt(vendorType.text.toString())
-            }
             it["vendorType"] = rtcType
+            it["enableNewClassExam"] = if (supportNewQuiz)  1 else 0
         }
         var gson = Gson()
         var info: String = gson.toJson(params)
@@ -451,52 +479,76 @@ class LiveClassLaunchActivity : AppCompatActivity(), CompoundButton.OnCheckedCha
         when (buttonView?.id) {
             ids[0] -> {
                 teachToolTypes = if (isChecked) {
-                    teachToolTypes?.or(TeacherToolType.PureUpimeTeachToolTypeTRIANGLE.value)
+                    teachToolTypes?.or(TeacherToolType.PureUpimeTeachToolTypeTRIANGLE.value)!!
                 } else {
-                    teachToolTypes?.and(TeacherToolType.PureUpimeTeachToolTypeTRIANGLE.value.inv());
+                    teachToolTypes?.and(TeacherToolType.PureUpimeTeachToolTypeTRIANGLE.value.inv())!!;
                 }
             }
             ids[1] -> {
                 teachToolTypes = if (isChecked) {
-                    teachToolTypes?.or(TeacherToolType.PureUpimeTeachToolTypeRECT.value)
+                    teachToolTypes?.or(TeacherToolType.PureUpimeTeachToolTypeRECT.value)!!
                 } else {
-                    teachToolTypes?.and(TeacherToolType.PureUpimeTeachToolTypeRECT.value.inv());
+                    teachToolTypes?.and(TeacherToolType.PureUpimeTeachToolTypeRECT.value.inv())!!;
                 }
             }
             ids[2] -> {
                 teachToolTypes = if (isChecked) {
-                    teachToolTypes?.or(TeacherToolType.PureUpimeTeachToolTypeELLIPSE.value)
+                    teachToolTypes?.or(TeacherToolType.PureUpimeTeachToolTypeELLIPSE.value)!!
                 } else {
-                    teachToolTypes?.and(TeacherToolType.PureUpimeTeachToolTypeELLIPSE.value.inv());
+                    teachToolTypes?.and(TeacherToolType.PureUpimeTeachToolTypeELLIPSE.value.inv())!!;
                 }
             }
             ids[3] -> {
                 teachToolTypes = if (isChecked) {
-                    teachToolTypes?.or(TeacherToolType.PureUpimeTeachToolTypeLINE.value)
+                    teachToolTypes?.or(TeacherToolType.PureUpimeTeachToolTypeLINE.value)!!
                 } else {
-                    teachToolTypes?.and(TeacherToolType.PureUpimeTeachToolTypeLINE.value.inv());
+                    teachToolTypes?.and(TeacherToolType.PureUpimeTeachToolTypeLINE.value.inv())!!;
                 }
             }
             ids[4] -> {
                 teachToolTypes = if (isChecked) {
-                    teachToolTypes?.or(TeacherToolType.PureUpimeTeachToolTypeDASHEDLINE.value)
+                    teachToolTypes?.or(TeacherToolType.PureUpimeTeachToolTypeDASHEDLINE.value)!!
                 } else {
-                    teachToolTypes?.and(TeacherToolType.PureUpimeTeachToolTypeDASHEDLINE.value.inv());
+                    teachToolTypes?.and(TeacherToolType.PureUpimeTeachToolTypeDASHEDLINE.value.inv())!!;
                 }
             }
             ids[5] -> {
                 teachToolTypes = if (isChecked) {
-                    teachToolTypes?.or(TeacherToolType.PureUpimeTeachToolTypeSQUARE.value)
+                    teachToolTypes?.or(TeacherToolType.PureUpimeTeachToolTypeSQUARE.value)!!
                 } else {
-                    teachToolTypes?.and(TeacherToolType.PureUpimeTeachToolTypeSQUARE.value.inv());
+                    teachToolTypes?.and(TeacherToolType.PureUpimeTeachToolTypeSQUARE.value.inv())!!;
                 }
             }
 
             ids[6] -> {
                 teachToolTypes = if (isChecked) {
-                    teachToolTypes?.or(TeacherToolType.PureUpimeTeachToolTypeCIRCLE.value)
+                    teachToolTypes?.or(TeacherToolType.PureUpimeTeachToolTypeCIRCLE.value)!!
                 } else {
-                    teachToolTypes?.and(TeacherToolType.PureUpimeTeachToolTypeCIRCLE.value.inv());
+                    teachToolTypes?.and(TeacherToolType.PureUpimeTeachToolTypeCIRCLE.value.inv())!!;
+                }
+            }
+
+            ids[7] -> {
+                teachToolTypes = if (isChecked) {
+                    teachToolTypes?.or(TeacherToolType.PureUpimeTeachToolTypeARROR.value)!!
+                } else {
+                    teachToolTypes?.and(TeacherToolType.PureUpimeTeachToolTypeARROR.value.inv())!!;
+                }
+            }
+
+            ids[8] -> {
+                teachToolTypes = if (isChecked) {
+                    teachToolTypes?.or(TeacherToolType.PureUpimeTeachToolTypeFANSHAPED.value)!!
+                } else {
+                    teachToolTypes?.and(TeacherToolType.PureUpimeTeachToolTypeFANSHAPED.value.inv())!!;
+                }
+            }
+
+            ids[9] -> {
+                teachToolTypes = if (isChecked) {
+                    teachToolTypes?.or(TeacherToolType.PureUpimeTeachToolTypePARALLELOGRAM.value)!!
+                } else {
+                    teachToolTypes?.and(TeacherToolType.PureUpimeTeachToolTypePARALLELOGRAM.value.inv())!!;
                 }
             }
         }

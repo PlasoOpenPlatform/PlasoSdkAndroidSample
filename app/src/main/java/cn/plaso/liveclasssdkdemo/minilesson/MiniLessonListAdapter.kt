@@ -5,11 +5,15 @@ import android.view.View
 import android.view.View.GONE
 import android.view.View.VISIBLE
 import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.ProgressBar
+import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import cn.plaso.liveclasssdkdemo.DemoApp
 import cn.plaso.liveclasssdkdemo.R
 import com.bumptech.glide.Glide
-import kotlinx.android.synthetic.main.listitem_mini_lesson.view.*
+import org.w3c.dom.Text
 
 class MiniLessonListAdapter : RecyclerView.Adapter<MiniLessonListAdapter.VH>() {
 
@@ -24,76 +28,86 @@ class MiniLessonListAdapter : RecyclerView.Adapter<MiniLessonListAdapter.VH>() {
     var onItemClick: ((LessonInfoWrap) -> Unit)? = null
 
     inner class VH(view: View) : RecyclerView.ViewHolder(view) {
+        var tvUpload = itemView.findViewById<TextView>(R.id.tvUpload)
+        var tvEdit = itemView.findViewById<TextView>(R.id.tvEdit)
+        var tvDelete = itemView.findViewById<TextView>(R.id.tvDelete)
+        var progressBar = itemView.findViewById<ProgressBar>(R.id.progressBar)
+        var tvTag = itemView.findViewById<TextView>(R.id.tvTag)
+        var ivMenu = itemView.findViewById<ImageView>(R.id.ivMenu)
+        var llMenu = itemView.findViewById<LinearLayout>(R.id.llMenu)
+        var ivCover = itemView.findViewById<ImageView>(R.id.ivCover)
+        var tvDuration = itemView.findViewById<TextView>(R.id.tvDuration)
+        var tvName = itemView.findViewById<TextView>(R.id.tvName)
         fun bind(it: LessonInfoWrap) {
             println(it)
             when (it.status) {
                 EDITING -> {
-                    itemView.tvUpload.visibility = GONE
-                    itemView.tvEdit.visibility = VISIBLE
-                    itemView.tvDelete.visibility = VISIBLE
-                    itemView.progressBar.visibility = GONE
-                    itemView.tvTag.text = "制作中"
+                    tvUpload.visibility = GONE
+                    tvEdit.visibility = VISIBLE
+                    tvDelete.visibility = VISIBLE
+                    progressBar.visibility = GONE
+                    tvTag.text = "制作中"
                 }
                 RECORDED -> {
-                    itemView.tvUpload.visibility = VISIBLE
-                    itemView.tvEdit.visibility = GONE
-                    itemView.tvDelete.visibility = VISIBLE
-                    itemView.progressBar.visibility = GONE
-                    itemView.tvTag.text = "未上传"
+                    tvUpload.visibility = VISIBLE
+                    tvEdit.visibility = GONE
+                    tvDelete.visibility = VISIBLE
+                    progressBar.visibility = GONE
+                    tvTag.text = "未上传"
                 }
                 UPLOADED -> {
-                    itemView.tvUpload.visibility = GONE
-                    itemView.tvEdit.visibility = GONE
-                    itemView.tvDelete.visibility = VISIBLE
-                    itemView.progressBar.visibility = GONE
-                    itemView.tvTag.text = "已上传"
+                    tvUpload.visibility = GONE
+                    tvEdit.visibility = GONE
+                    tvDelete.visibility = VISIBLE
+                    progressBar.visibility = GONE
+                    tvTag.text = "已上传"
                 }
                 UPLOADING -> {
-                    itemView.tvUpload.visibility = GONE
-                    itemView.tvEdit.visibility = GONE
-                    itemView.tvDelete.visibility = VISIBLE
-                    itemView.progressBar.visibility = VISIBLE
-                    itemView.progressBar.progress = it.progress ?: 0
-                    itemView.tvTag.text = "上传中"
+                    tvUpload.visibility = GONE
+                    tvEdit.visibility = GONE
+                    tvDelete.visibility = VISIBLE
+                    progressBar.visibility = VISIBLE
+                    progressBar.progress = it.progress ?: 0
+                    tvTag.text = "上传中"
                 }
 
             }
 
             if (it == focusedDraft) {
-                itemView.llMenu.visibility = VISIBLE
+                llMenu.visibility = VISIBLE
             } else {
-                itemView.llMenu.visibility = GONE
+                llMenu.visibility = GONE
             }
-            Glide.with(itemView).load(it.lessonInfo.coverName).into(itemView.ivCover)
-            itemView.tvDuration.text = it.getDuration()
-            itemView.tvName.text = it.getName()
+            Glide.with(itemView).load(it.lessonInfo.coverName).into(ivCover)
+            tvDuration.text = it.getDuration()
+            tvName.text = it.getName()
         }
 
         init {
-            itemView.ivMenu.setOnClickListener {
-                itemView.llMenu.let {
+            ivMenu.setOnClickListener {
+                llMenu.let {
                     lessonList?.get(adapterPosition)?.let {
                         changeFocus(it)
                     }
 
                 }
             }
-            itemView.tvDelete.setOnClickListener {
+            tvDelete.setOnClickListener {
                 lessonList?.get(adapterPosition)?.let {
                     changeFocus(it)
                     onDelete?.invoke(it)
                 }
             }
-            itemView.tvEdit.setOnClickListener {
-                itemView.llMenu.visibility = View.GONE
+            tvEdit.setOnClickListener {
+                llMenu.visibility = View.GONE
                 lessonList?.get(adapterPosition)?.let {
                     changeFocus(it)
                     onEdit?.invoke(it)
                 }
             }
 
-            itemView.tvUpload.setOnClickListener {
-                itemView.llMenu.visibility = View.GONE
+            tvUpload.setOnClickListener {
+                llMenu.visibility = View.GONE
                 lessonList?.get(adapterPosition)?.let {
                     changeFocus(it)
                     onUpload?.invoke(it)

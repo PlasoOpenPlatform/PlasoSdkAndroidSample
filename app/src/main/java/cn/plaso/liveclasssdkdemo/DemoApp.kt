@@ -29,7 +29,7 @@ class DemoApp : Application() {
                 return true
             }
 
-            override fun showResourceCenter() {
+            override fun showResourceCenter(p0: Boolean) {
             }
 
             override fun dismissResourceCenter() {

@@ -1,10 +1,8 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
-apply plugin: 'kotlin-android-extensions'
 
 android {
-    compileSdkVersion 30
-    buildToolsVersion "30.0.0"
+    compileSdk 34
 
     signingConfigs {
         plasodemo {
@@ -17,8 +15,8 @@ android {
 
     defaultConfig {
         applicationId "cn.plaso.liveclasssdkdemo"
-        minSdkVersion 23
-        targetSdkVersion 26
+        minSdkVersion 24
+        targetSdkVersion 33
         versionCode 1
         versionName "1.0"
 
@@ -36,42 +34,27 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
     }
-
-    configurations.all {
-        resolutionStrategy.eachDependency {
-            DependencyResolveDetails details ->
-                def requested = details.requested
-                if (requested.group == 'com.android.support') {
-                    if (!requested.name.startsWith("multidex")) {
-                        details.useVersion '27.1.1'
-                    }
-                }
-        }
-
-        resolutionStrategy{
-            force 'androidx.core:core:1.6.0'
-        }
-    }
-
 }
 
 dependencies {
     implementation fileTree(dir: "libs", include: ["*.jar"])
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-    implementation 'androidx.core:core-ktx:1.3.1'
+    implementation 'androidx.core:core-ktx:1.9.0'
     implementation 'androidx.appcompat:appcompat:1.2.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.0.1'
 
-    implementation 'cn.plaso:styleupime:1.28.804'
-    testImplementation 'junit:junit:4.12'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.2'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
+    implementation 'cn.plaso:styleupime:1.43.412'
 
-    implementation "androidx.activity:activity-ktx:1.1.0"
-    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.2.0"
+
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+
+    implementation "androidx.activity:activity-ktx:1.8.0"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.2"
 
     implementation 'com.squareup.retrofit2:retrofit:2.8.1'
     implementation 'com.squareup.retrofit2:converter-gson:2.8.1'
