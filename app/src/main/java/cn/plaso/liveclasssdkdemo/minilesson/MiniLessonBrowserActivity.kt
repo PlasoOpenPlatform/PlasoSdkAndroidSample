@@ -187,7 +187,7 @@ class MiniLessonBrowserActivity : AppCompatActivity() {
 
         config.keyForColor = miniLessonViewModel.configKey
         config.pptType = if (DemoApp.newPPt) UpimeObject.TYPE_DX_PPT  else UpimeObject.TYPE_PPT
-        config.fobiddenRecordScreen = true;
+        config.forbiddenRecordScreen = true;
         config.supportHighlighter = DemoApp.sp.getBoolean("supportHighlighter", false)
 
         var extraJson = JSONObject()

@@ -25,10 +25,14 @@ class MainActivity : AppCompatActivity(), CompoundButton.OnCheckedChangeListener
         openFileMode = DemoApp.sp.getInt("openFileMode", openFileMode)
         supportHighlighter = DemoApp.sp.getBoolean("supportHighlighter", false)
         var btnLiveClass = findViewById<Button>(R.id.btnLiveClass)
+        val sign_in = findViewById<CheckBox>(R.id.sign_in)
+        val vote = findViewById<CheckBox>(R.id.vote_up)
         btnLiveClass.setOnClickListener {
             startActivity(Intent(this, LiveClassLaunchActivity::class.java).apply {
                 putExtra("OpenFileMode", openFileMode)
                 putExtra("ToolBoxItem", toolBoxItems)
+                putExtra("SupportSignIn", sign_in.isChecked);
+                putExtra("SupportVote", vote.isChecked)
             })
         }
         var btnMiniLesson = findViewById<Button>(R.id.btnMiniLesson)

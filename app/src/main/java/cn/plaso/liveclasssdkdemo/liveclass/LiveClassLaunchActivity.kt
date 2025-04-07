@@ -8,6 +8,7 @@ import android.text.TextUtils
 import android.view.View
 import android.view.View.GONE
 import android.view.View.VISIBLE
+import android.widget.AdapterView
 import android.widget.Button
 import android.widget.CheckBox
 import android.widget.CompoundButton
@@ -15,6 +16,7 @@ import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.RadioButton
 import android.widget.RadioGroup
+import android.widget.Spinner
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SwitchCompat
@@ -23,8 +25,10 @@ import cn.plaso.liveclasssdkdemo.DemoApp
 import cn.plaso.liveclasssdkdemo.R
 import cn.plaso.liveclasssdkdemo.SignHelper
 import cn.plaso.upime.ClassConfig
+import cn.plaso.upime.IBoardCallback
 import cn.plaso.upime.ILiveClassListener
 import cn.plaso.upime.UpimeBoard
+import cn.plaso.upime.UpimeBoardData
 import cn.plaso.upime.UpimeConfig
 import cn.plaso.upime.UpimeParameter
 import cn.plaso.upime.WebviewObject
@@ -36,6 +40,8 @@ class LiveClassLaunchActivity : AppCompatActivity(), CompoundButton.OnCheckedCha
     private var videoStream: Int = -1;
     private var userType: String = "listener"
     private var openFileMode = UpimeConfig.OPEN_FILE_MODE_WINDOW
+    private var enableLiveSign = false;
+    private var enableVote = false;
     private var enableBlueTooth = false
     private var enablePptInteract = false
     private var undoSupport = false
@@ -62,6 +68,8 @@ class LiveClassLaunchActivity : AppCompatActivity(), CompoundButton.OnCheckedCha
     private var logLevel = UpimeParameter.INFO;
     private var teachingList: MutableList<WebviewObject> = ArrayList(16)
     private var supportNewQuiz: Boolean = false // 是否支持新版随堂测；
+    private var enableSaveBoard: Boolean = false // 是否支持保存板书
+    private var editElementMode: Int = 0  // 点擦为0， 对象擦：1（手写），3（手写+文本框），5（手写+图形），7（手写+文本框+图形）
 
     private lateinit var etMeetingId: EditText
     private lateinit var etName: EditText
@@ -118,6 +126,8 @@ class LiveClassLaunchActivity : AppCompatActivity(), CompoundButton.OnCheckedCha
 
         openFileMode = intent.getIntExtra("OpenFileMode", UpimeConfig.OPEN_FILE_MODE_IMAGE)
         toolBoxItems = intent.getIntExtra("ToolBoxItem", 0)
+        enableLiveSign = intent.getBooleanExtra("SupportSignIn", false)
+        enableVote = intent.getBooleanExtra("SupportVote", false)
         var meettype = sharedPreferences?.getString(MEETING_TYPE, "video")
         if ("video".equals(meettype)) {
             findViewById<RadioGroup>(R.id.rgMeetingType).check(R.id.rbVideo)
@@ -245,6 +255,22 @@ class LiveClassLaunchActivity : AppCompatActivity(), CompoundButton.OnCheckedCha
             supportNewQuiz = isChecked
         }
 
+        findViewById<SwitchCompat>(R.id.sc_save_board).setOnCheckedChangeListener { btn, isChecked ->
+            enableSaveBoard = isChecked
+        }
+
+        editElementMode = resources.getStringArray(R.array.edit_element_mode)[findViewById<Spinner>(R.id.sp_edit_element_mode).selectedItemPosition].toInt()
+        findViewById<Spinner>(R.id.sp_edit_element_mode).onItemSelectedListener =
+            object : AdapterView.OnItemSelectedListener {
+                override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                    editElementMode = resources.getStringArray(R.array.edit_element_mode)[position].toInt()
+                }
+
+                override fun onNothingSelected(parent: AdapterView<*>?) {
+                    // Handle case where no item is selected if needed
+                }
+            }
+
         initCheckBox()
         initDefaultValue()
     }
@@ -331,6 +357,8 @@ class LiveClassLaunchActivity : AppCompatActivity(), CompoundButton.OnCheckedCha
                 it.teachToolTypes = teachToolTypes
                 it.supportUndo = undoSupport
                 it.useNewSmallBoard = useNewSmallBoard
+                it.enableLiveSign = enableLiveSign
+                it.enableVote = enableVote
                 it.supportSelect = supportSelect;
                 it.endRemindTime = remindTime.text.toString().toInt()
                 var limitnum = 0
@@ -364,6 +392,7 @@ class LiveClassLaunchActivity : AppCompatActivity(), CompoundButton.OnCheckedCha
                 );
                 it.webviewList = teachingList;
                 it.supportHighlighter = DemoApp.sp.getBoolean("supportHighlighter", false)
+                it.enableSaveBoard = enableSaveBoard
             }
             DemoApp.upime.launchLiveClass(config, object : ILiveClassListener {
                 override fun onLiveClassReady(upimeBoard: UpimeBoard?) {
@@ -374,6 +403,14 @@ class LiveClassLaunchActivity : AppCompatActivity(), CompoundButton.OnCheckedCha
                 }
 
                 override fun onSkinChanged(skinId: Int) {
+                }
+
+                override fun onUpimeBoardSaved(
+                    p0: Context?,
+                    p1: UpimeBoardData?,
+                    p2: IBoardCallback?
+                ) {
+                    p2?.onSaveSuccess()
                 }
 
             })
@@ -462,6 +499,7 @@ class LiveClassLaunchActivity : AppCompatActivity(), CompoundButton.OnCheckedCha
             }
             it["vendorType"] = rtcType
             it["enableNewClassExam"] = if (supportNewQuiz)  1 else 0
+            it["d_enableObjectEraser"] = editElementMode
         }
         var gson = Gson()
         var info: String = gson.toJson(params)

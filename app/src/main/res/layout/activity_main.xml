@@ -131,6 +131,26 @@
                     android:checked="false"
                     android:text="浏览器(仅适用IOS)" />
             </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+
+                <CheckBox
+                    android:id="@+id/sign_in"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="true"
+                    android:text="签到" />
+                <CheckBox
+                    android:id="@+id/vote_up"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="true"
+                    android:text="投票" />
+
+            </LinearLayout>
+
         </LinearLayout>
         <LinearLayout
             android:gravity="center"

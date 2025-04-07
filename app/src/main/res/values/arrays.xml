@@ -30,4 +30,11 @@
         <item>test</item>
         <item>www</item>
     </string-array>
+    <string-array name="edit_element_mode">
+        <item>0</item>
+        <item>1</item>
+        <item>3</item>
+        <item>5</item>
+        <item>7</item>
+    </string-array>
 </resources>

@@ -666,6 +666,41 @@
 
         </LinearLayout>
 
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/enable_save_board" />
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/sc_save_board"
+                android:checked="false"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/edit_element_mode_tips" />
+
+            <Spinner
+                android:id="@+id/sp_edit_element_mode"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="20dp"
+                android:entries="@array/edit_element_mode" />
+        </LinearLayout>
+
+
         <Button
             android:id="@+id/btnEnterLiveClass"
             android:layout_width="wrap_content"

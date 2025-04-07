@@ -34,4 +34,6 @@
     <string name="enableUploadLog">支持上传日志</string>
     <string name="backCamera">使用后置摄像头</string>
     <string name="support_new_quiz">支持新版随堂测</string>
+    <string name="enable_save_board">支持保存板书</string>
+    <string name="edit_element_mode_tips">点擦为0， 对象擦：1（手写），3（手写+文本框），5（手写+图形），7（手写+文本框+图形）</string>
 </resources>
