@@ -5,9 +5,12 @@ import android.text.Editable
 import android.text.TextUtils
 import android.text.TextWatcher
 import android.util.Log
+import android.view.View
+import android.widget.AdapterView
 import android.widget.Button
 import android.widget.EditText
 import android.widget.RadioGroup
+import android.widget.Spinner
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SwitchCompat
 import androidx.lifecycle.Observer
@@ -40,6 +43,7 @@ class MiniLessonBrowserActivity : AppCompatActivity() {
     private var openFileMode = UpimeConfig.OPEN_FILE_MODE_WINDOW
     private var toolBoxItems = UpimeConfig.ToolBoxItem.ALL.value
     private var recordType = MiniLessonConfig.RECORD_TYPE_AUDIO
+    private var editElementMode: Int = 0  // 点擦为0， 对象擦：1（手写），3（手写+文本框），5（手写+图形），7（手写+文本框+图形）
     // private var openFileMode = UpimeConfig.OPEN_FILE_MODE_IMAGE
 
     private lateinit var btnCreateMiniLesson: Button
@@ -149,7 +153,19 @@ class MiniLessonBrowserActivity : AppCompatActivity() {
         });
         mini_title = findViewById(R.id.mini_title)
 
-   }
+        editElementMode = resources.getStringArray(R.array.edit_element_mode)[findViewById<Spinner>(R.id.sp_edit_element_mode).selectedItemPosition].toInt()
+        findViewById<Spinner>(R.id.sp_edit_element_mode).onItemSelectedListener =
+            object : AdapterView.OnItemSelectedListener {
+                override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                    editElementMode = resources.getStringArray(R.array.edit_element_mode)[position].toInt()
+                }
+
+                override fun onNothingSelected(parent: AdapterView<*>?) {
+                    // Handle case where no item is selected if needed
+                }
+            }
+
+    }
 
     override fun onResume() {
         super.onResume()

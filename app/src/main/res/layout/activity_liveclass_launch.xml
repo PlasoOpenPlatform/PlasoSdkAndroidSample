@@ -82,7 +82,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="课堂结束时间：" />
+                android:text="课堂结束时间:" />
 
             <EditText
                 android:id="@+id/endTime"
@@ -101,7 +101,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="双减结束时间：" />
+                android:text="双减结束时间:" />
 
             <EditText
                 android:id="@+id/remindTime"
@@ -160,7 +160,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="红包雨限制个数：" />
+                android:text="红包雨限制个数:" />
 
             <EditText
                 android:id="@+id/redPacketLimit"

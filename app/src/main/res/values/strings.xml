@@ -15,7 +15,6 @@
     <string name="assistant">助教</string>
     <string name="visitor">游客</string>
     <string name="weblistener">直播听众</string>
-    <string name="super_listener">听课老师</string>
     <string name="user_name">请输入用户名</string>
     <string name="old_protocol">老协议</string>
     <string name="new_protocol">新协议</string>

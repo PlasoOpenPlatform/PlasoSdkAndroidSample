@@ -155,8 +155,8 @@ class LiveClassLaunchActivity : AppCompatActivity(), CompoundButton.OnCheckedCha
             }
         }
 
-        var usertype = sharedPreferences?.getString(ROLE, "listener")
-        var rgUserType = findViewById<RadioGroup>(R.id.rgUserType)
+        val usertype = sharedPreferences?.getString(ROLE, "listener")
+        val rgUserType = findViewById<RadioGroup>(R.id.rgUserType)
         if ("speaker".equals(usertype)) {
             rgUserType.check(R.id.rbSpeaker)
             userType = "speaker"
@@ -177,8 +177,8 @@ class LiveClassLaunchActivity : AppCompatActivity(), CompoundButton.OnCheckedCha
             }
         }
 
-        var res = sharedPreferences?.getString(DIMISSION, "1280x720");
-        var rgResolution = findViewById<RadioGroup>(R.id.rgResolution)
+        val res = sharedPreferences?.getString(DIMISSION, "1280x720");
+        val rgResolution = findViewById<RadioGroup>(R.id.rgResolution)
         if ("1280x720".equals(res)) {
             rgResolution.check(R.id.rb720)
             resolution = "1280x720"
@@ -217,23 +217,23 @@ class LiveClassLaunchActivity : AppCompatActivity(), CompoundButton.OnCheckedCha
         findViewById<SwitchCompat>(R.id.selectSwitch).setOnCheckedChangeListener { btn, isChecked ->
             supportSelect = isChecked
         }
-        var teach_tool_switch = findViewById<SwitchCompat>(R.id.teach_tool_switch)
-        var layout_teach_tools = findViewById<LinearLayout>(R.id.layout_teach_tools)
+        val teach_tool_switch = findViewById<SwitchCompat>(R.id.teach_tool_switch)
+        val layout_teach_tools = findViewById<LinearLayout>(R.id.layout_teach_tools)
         teach_tool_switch.setOnCheckedChangeListener { btn, isChecked ->
             layout_teach_tools.visibility = if (isChecked) VISIBLE else GONE
             teachToolTypes = if (isChecked) TeacherToolType.PureUpimeTeachToolTypeAll.value else 0
         }
 
-        var teaching_method = findViewById<SwitchCompat>(R.id.teaching_method)
-        var tv_auxiliary_cam = findViewById<TextView>(R.id.tv_auxiliary_cam)
-        var axuiliary_cam = findViewById<SwitchCompat>(R.id.axuiliary_cam)
+        val teaching_method = findViewById<SwitchCompat>(R.id.teaching_method)
+        val tv_auxiliary_cam = findViewById<TextView>(R.id.tv_auxiliary_cam)
+        val axuiliary_cam = findViewById<SwitchCompat>(R.id.axuiliary_cam)
         teaching_method.setOnCheckedChangeListener { btn, isChecked ->
             isPhoneTeachingMethod = isChecked;
             tv_auxiliary_cam.visibility = if (isPhoneTeachingMethod) VISIBLE else GONE;
             axuiliary_cam.visibility = if (isPhoneTeachingMethod) VISIBLE else GONE;
         }
 
-        var resident_camera = findViewById<SwitchCompat>(R.id.resident_camera)
+        val resident_camera = findViewById<SwitchCompat>(R.id.resident_camera)
         resident_camera.setOnCheckedChangeListener { btn, isChecked ->
             isResidentCamera = isChecked;
         }
@@ -254,7 +254,6 @@ class LiveClassLaunchActivity : AppCompatActivity(), CompoundButton.OnCheckedCha
         findViewById<SwitchCompat>(R.id.sc_new_quiz).setOnCheckedChangeListener { btn, isChecked ->
             supportNewQuiz = isChecked
         }
-
         findViewById<SwitchCompat>(R.id.sc_save_board).setOnCheckedChangeListener { btn, isChecked ->
             enableSaveBoard = isChecked
         }
@@ -322,18 +321,18 @@ class LiveClassLaunchActivity : AppCompatActivity(), CompoundButton.OnCheckedCha
     }
 
     private fun launchLiveClass() {
-        var parameter: UpimeParameter = UpimeParameter()
+        val parameter: UpimeParameter = UpimeParameter()
         parameter.waterMark = "liveclassdemo"
         parameter.logLevel = logLevel
         parameter.appId = Config.appId
         val path: String = this.getExternalFilesDir("logs")!!.path
         parameter.logDir = path
         DemoApp.upime.setUpimeParameter(parameter)
-        var hostaddr = findViewById<EditText>(R.id.hostaddr)
-        var etColor= findViewById<EditText>(R.id.etColor)
-        var remindTime= findViewById<EditText>(R.id.remindTime)
-        var redPacketLimit= findViewById<EditText>(R.id.redPacketLimit)
-        var etPermission= findViewById<EditText>(R.id.etPermission)
+        val hostaddr = findViewById<EditText>(R.id.hostaddr)
+        val etColor= findViewById<EditText>(R.id.etColor)
+        val remindTime= findViewById<EditText>(R.id.remindTime)
+        val redPacketLimit= findViewById<EditText>(R.id.redPacketLimit)
+        val etPermission= findViewById<EditText>(R.id.etPermission)
 
         val query = getQuery()
         if (query != null) {
@@ -461,7 +460,7 @@ class LiveClassLaunchActivity : AppCompatActivity(), CompoundButton.OnCheckedCha
             sharpness = "30"
         }
 
-        var rgResolution = findViewById<RadioGroup>(R.id.rgResolution)
+        val rgResolution = findViewById<RadioGroup>(R.id.rgResolution)
         val resolutionId = rgResolution.checkedRadioButtonId
         /*if (resolutionId == R.id.rb360) {
             resolution = "480x360"

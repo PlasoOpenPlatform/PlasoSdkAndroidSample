@@ -15,7 +15,7 @@ import cn.plaso.upime.UpimeConfig
 
 class MainActivity : AppCompatActivity(), CompoundButton.OnCheckedChangeListener {
 
-    var openFileMode = UpimeConfig.OPEN_FILE_MODE_IMAGE
+    var openFileMode = UpimeConfig.OPEN_FILE_MODE_WINDOW
     var toolBoxItems = UpimeConfig.ToolBoxItem.ALL.value;
     var supportHighlighter = false
 
@@ -24,7 +24,7 @@ class MainActivity : AppCompatActivity(), CompoundButton.OnCheckedChangeListener
         setContentView(R.layout.activity_main)
         openFileMode = DemoApp.sp.getInt("openFileMode", openFileMode)
         supportHighlighter = DemoApp.sp.getBoolean("supportHighlighter", false)
-        var btnLiveClass = findViewById<Button>(R.id.btnLiveClass)
+        val btnLiveClass = findViewById<Button>(R.id.btnLiveClass)
         val sign_in = findViewById<CheckBox>(R.id.sign_in)
         val vote = findViewById<CheckBox>(R.id.vote_up)
         btnLiveClass.setOnClickListener {
@@ -35,7 +35,7 @@ class MainActivity : AppCompatActivity(), CompoundButton.OnCheckedChangeListener
                 putExtra("SupportVote", vote.isChecked)
             })
         }
-        var btnMiniLesson = findViewById<Button>(R.id.btnMiniLesson)
+        val btnMiniLesson = findViewById<Button>(R.id.btnMiniLesson)
         btnMiniLesson.setOnClickListener {
             startActivity(
                 Intent(this, MiniLessonBrowserActivity::class.java).apply {
@@ -43,13 +43,13 @@ class MainActivity : AppCompatActivity(), CompoundButton.OnCheckedChangeListener
                 }
             )
         }
-        var rbWindow = findViewById<RadioButton>(R.id.rbWindow)
-        var rbImage = findViewById<RadioButton>(R.id.rbImage)
+        val rbWindow = findViewById<RadioButton>(R.id.rbWindow)
+        val rbImage = findViewById<RadioButton>(R.id.rbImage)
         when (openFileMode) {
             UpimeConfig.OPEN_FILE_MODE_WINDOW -> rbWindow.isChecked = true
             else -> rbImage.isChecked = true
         }
-        var rgOpenFileMode = findViewById<RadioGroup>(R.id.rgOpenFileMode)
+        val rgOpenFileMode = findViewById<RadioGroup>(R.id.rgOpenFileMode)
         rgOpenFileMode.setOnCheckedChangeListener { group, checkedId ->
             when (checkedId) {
                 R.id.rbImage -> {
@@ -62,29 +62,29 @@ class MainActivity : AppCompatActivity(), CompoundButton.OnCheckedChangeListener
 
             DemoApp.sp.edit().putInt("openFileMode", openFileMode).apply()
         }
-        var sw_highlighter = findViewById<SwitchCompat>(R.id.sw_highlighter)
+        val sw_highlighter = findViewById<SwitchCompat>(R.id.sw_highlighter)
         sw_highlighter.isChecked = supportHighlighter
-        sw_highlighter.setOnCheckedChangeListener(CompoundButton.OnCheckedChangeListener { buttonView, isChecked ->
+        sw_highlighter.setOnCheckedChangeListener { _, isChecked ->
             supportHighlighter = isChecked
             DemoApp.sp.edit().putBoolean("supportHighlighter", supportHighlighter).apply()
-        })
+        }
         initCheckBox()
     }
 
     private fun initCheckBox() {
-        var class_test = findViewById<CheckBox>(R.id.class_test)
+        val class_test = findViewById<CheckBox>(R.id.class_test)
         class_test.setOnCheckedChangeListener(this)
-        var timer_count = findViewById<CheckBox>(R.id.timer_count)
+        val timer_count = findViewById<CheckBox>(R.id.timer_count)
         timer_count.setOnCheckedChangeListener(this)
-        var small_board = findViewById<CheckBox>(R.id.small_board)
+        val small_board = findViewById<CheckBox>(R.id.small_board)
         small_board.setOnCheckedChangeListener(this)
-        var dice = findViewById<CheckBox>(R.id.dice)
+        val dice = findViewById<CheckBox>(R.id.dice)
         dice.setOnCheckedChangeListener(this)
-        var red_packet = findViewById<CheckBox>(R.id.red_packet)
+        val red_packet = findViewById<CheckBox>(R.id.red_packet)
         red_packet.setOnCheckedChangeListener(this)
-        var responder = findViewById<CheckBox>(R.id.responder)
+        val responder = findViewById<CheckBox>(R.id.responder)
         responder.setOnCheckedChangeListener(this)
-        var browser = findViewById<CheckBox>(R.id.browser)
+        val browser = findViewById<CheckBox>(R.id.browser)
         browser.setOnCheckedChangeListener(this)
     }
 
