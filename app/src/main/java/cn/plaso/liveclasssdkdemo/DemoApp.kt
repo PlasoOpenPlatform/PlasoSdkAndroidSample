@@ -138,10 +138,6 @@ class DemoApp : Application() {
                 Log.d(TAG, "getPreParseFileName $info , $suffix")
 
                 fun extractId(value: Any?): String? {
-                    (value as? Map<*, *>)?.let { map ->
-                        val id = map["id"] as? String
-                        if (!id.isNullOrBlank()) return id
-                    }
                     val text = value?.toString().orEmpty()
                     val m = Regex("""id\s*=\s*([0-9a-fA-F\-]{36}|[0-9a-zA-Z\-_]+)""").find(text)
                     return m?.groupValues?.get(1)
