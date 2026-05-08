@@ -13,7 +13,7 @@ object Config {
             "      \"region\": \"oss-cn-hangzhou\",\n" +
             "      \"domain\": \"aliyuncs.com\"\n" +
             "    }"
-    var server = "https://dev.plaso.cn"
+    var server = "https://www.plaso.cn"
 
     /**
      * the appId get from plaso
