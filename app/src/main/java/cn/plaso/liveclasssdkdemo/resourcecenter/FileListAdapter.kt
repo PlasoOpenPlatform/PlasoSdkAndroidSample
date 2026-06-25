@@ -1,11 +1,11 @@
 package cn.plaso.liveclasssdkdemo.resourcecenter
 
-import android.net.Uri
 import android.text.TextUtils
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.core.net.toUri
 import androidx.recyclerview.widget.AsyncListDiffer
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
@@ -54,7 +54,7 @@ class FileListAdapter : RecyclerView.Adapter<FileListAdapter.Holder>() {
     }
 
     private fun getFileName(url: String): CharSequence? {
-        val uri = Uri.parse(url)
+        val uri = url.toUri()
         return uri.lastPathSegment
     }
 

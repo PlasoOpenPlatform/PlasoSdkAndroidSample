@@ -11,9 +11,7 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        android:text="https://file-examples-com.github.io/uploads/2017/02/file-sample_500kB.doc"/>
-       // android:text="https://file-examples-com.github.io/uploads/2017/10/file-example_PDF_500_kB.pdf"/>
-<!--        android:text="https://www.baidu.com/img/PCtm_d9c8750bed0b3c7d089fa7d55720d6cf.png"/>-->
+        android:text="@string/default_resource_url"/>
     <LinearLayout
         app:layout_constraintTop_toBottomOf="@+id/etInput"
         android:layout_width="match_parent"

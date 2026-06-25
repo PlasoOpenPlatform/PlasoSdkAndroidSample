@@ -17,17 +17,17 @@ class CloudFilePickerActivity : AppCompatActivity() {
         val viewPager = findViewById<ViewPager2>(R.id.viewPager)
 
         viewPager.adapter = object : FragmentStateAdapter(this) {
-            override fun getItemCount(): Int = TITLES.size
+            override fun getItemCount(): Int = TITLE_RES_IDS.size
             override fun createFragment(position: Int) = CloudFileListFragment.newInstance(PREPARSED_FLAGS[position])
         }
 
         TabLayoutMediator(tabLayout, viewPager) { tab, position ->
-            tab.text = TITLES[position]
+            tab.text = getString(TITLE_RES_IDS[position])
         }.attach()
     }
 
     companion object {
-        private val TITLES = listOf("非预解析文件", "预解析文件")
+        private val TITLE_RES_IDS = listOf(R.string.cloud_tab_non_preparsed, R.string.cloud_tab_preparsed)
         private val PREPARSED_FLAGS = listOf(false, true)
     }
 }

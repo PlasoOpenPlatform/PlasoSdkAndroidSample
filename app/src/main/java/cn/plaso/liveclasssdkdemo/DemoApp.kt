@@ -4,14 +4,18 @@ import android.app.Application
 import android.content.Intent
 import android.content.SharedPreferences
 import android.util.Log
+import cn.plaso.liveclasssdkdemo.config.AdvancedConfig
+import cn.plaso.liveclasssdkdemo.config.LiveClassSettings
+import cn.plaso.liveclasssdkdemo.config.MiniLessonSettings
+import cn.plaso.liveclasssdkdemo.config.PrepareLessonSettings
 import cn.plaso.liveclasssdkdemo.minilesson.LessonInfoWrap
 import cn.plaso.liveclasssdkdemo.resourcecenter.CloudFilePickerActivity
+import cn.plaso.liveclasssdkdemo.resourcecenter.PreParseFileHelper
 import cn.plaso.upime.*
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import okhttp3.OkHttpClient
-import okhttp3.Request
 import java.util.ArrayList
+import androidx.core.content.edit
 
 class DemoApp : Application() {
     companion object {
@@ -23,21 +27,17 @@ class DemoApp : Application() {
         lateinit var upime: StyleUpime
         var newPPt: Boolean = false
 
-        // Parsed file API constants (keep identical behavior; extracted for reuse)
-        private const val PARSED_HOST = "120.55.3.51"
-        private const val PARSED_PORT = 3000
-        private const val API_BASE = "api/files"
     }
 
-    // Reuse a single OkHttpClient across requests
-    private val httpClient by lazy { OkHttpClient.Builder().build() }
-
     lateinit var resProvider: IResourceProvider
-    private data class ParsedUrlResp(val success: Boolean = false, val url: String? = null)
     override fun onCreate() {
         super.onCreate()
         app = this
         sp = getSharedPreferences("demo", MODE_PRIVATE)
+        LiveClassSettings.init(this)
+        MiniLessonSettings.init(this)
+        PrepareLessonSettings.init(this)
+        AdvancedConfig.init(this)
 
         resProvider = object : IResourceProvider {
             override fun supportResourceCenter(): Boolean {
@@ -54,8 +54,8 @@ class DemoApp : Application() {
             }
 
             override fun getExtFileName(info: Any?, resouceCallback: IResourceCallback?) {
-                Log.i(TAG, "getExtFileName $info className ${info?.javaClass?.name}")
                 // 这个info就是调用insertObject插入时候UpimeObject里面的info参数，回调回来的。
+                Log.i(TAG, "getExtFileName $info className ${info?.javaClass?.name}")
                 if (info == null || info !is ArrayList<*>) {
                     Log.e(TAG, "getExtFileName info is null")
                     return
@@ -134,62 +134,19 @@ class DemoApp : Application() {
                 callback: IResourceCallback?
             ) {
                 // 这个info就是调用insertObject插入时候UpimeObject里面的info参数，回调回来的。
-                // 形如：[parsed, {id=xxxx}]
+                // 形如：[parsed, {id=xxxx}]；suffix=? 为图片模式拉原始文档签名 URL
                 Log.d(TAG, "getPreParseFileName $info , $suffix")
-
-                fun extractId(value: Any?): String? {
-                    val text = value?.toString().orEmpty()
-                    val m = Regex("""id\s*=\s*([0-9a-fA-F\-]{36}|[0-9a-zA-Z\-_]+)""").find(text)
-                    return m?.groupValues?.get(1)
-                }
-
-                val id = extractId(info)
-                Log.d(TAG, "parsed id = $id")
-                // /1.jpg
-                val fileName = "_i$suffix"
-                val httpUrl: okhttp3.HttpUrl = okhttp3.HttpUrl.Builder()
-                    .scheme("http")
-                    .host(PARSED_HOST)
-                    .port(PARSED_PORT)
-                    .addPathSegments(API_BASE)
-                    .addPathSegment(id.toString())
-                    .addPathSegment("parsed-url")
-                    .addQueryParameter("suffix", fileName) // 会自动对 "/" 进行编码为 %2F
-                    .build()
-                Log.d(TAG, "getPreParseFileName httpPath: $httpUrl")
-
-                val request = Request.Builder()
-                    .get()
-                    .addHeader("Accept", "application/json")
-                    .url(httpUrl)
-                    .build()
-                httpClient.newCall(request).enqueue(object : okhttp3.Callback {
-                    override fun onFailure(call: okhttp3.Call, e: java.io.IOException) {
-                        Log.e(TAG, "getPreParseFileName request error", e)
-                    }
-                    override fun onResponse(call: okhttp3.Call, response: okhttp3.Response) {
-                        response.use { resp ->
-                            val body = resp.body?.string().orEmpty()
-                            Log.d(TAG, "getPreParseFileName http code=${resp.code}, body=$body")
-                            val parsed = try {
-                                GSON.fromJson(body, ParsedUrlResp::class.java)
-                            } catch (e: Exception) {
-                                Log.e(TAG, "getPreParseFileName parse error", e)
-                                null
-                            }
-                            Log.d(TAG, "getPreParseFileName parsed=$parsed")
-                            val realUrl = parsed?.takeIf { it.success }?.url
-                            if (!realUrl.isNullOrBlank()) {
-                                android.os.Handler(android.os.Looper.getMainLooper()).post {
-                                    Log.d(TAG, "getPreParseFileName realUrl=$realUrl")
-                                    callback?.onFilePath(realUrl)
-                                }
-                            } else {
-                                Log.e(TAG, "getPreParseFileName parse failed: url is null or success=false")
-                            }
+                PreParseFileHelper.fetchPreParseFileName(info, suffix) { realUrl ->
+                    android.os.Handler(android.os.Looper.getMainLooper()).post {
+                        if (!realUrl.isNullOrBlank()) {
+                            Log.d(TAG, "getPreParseFileName realUrl=$realUrl")
+                            callback?.onFilePath(realUrl)
+                        } else {
+                            Log.e(TAG, "getPreParseFileName failed")
+                            callback?.onFilePath(null)
                         }
                     }
-                })
+                }
             }
 
             override fun signQuery(queryMap: MutableMap<String, Any>?, cb: SignCallback?): Boolean {
@@ -233,7 +190,7 @@ class DemoApp : Application() {
             lessonInfoList.add(lesson)
         }
 
-        sp.edit().putString("lessoninfo", GSON.toJson(lessonInfoList)).commit()
+        sp.edit(commit = true) { putString("lessoninfo", GSON.toJson(lessonInfoList)) }
     }
 
     fun deleteLessonInfo(lesson: LessonInfoWrap) {
@@ -247,7 +204,7 @@ class DemoApp : Application() {
         }
         savedLesson?.let {
             lessonInfoList.remove(it)
-            sp.edit().putString("lessoninfo", GSON.toJson(lessonInfoList)).commit()
+            sp.edit(commit = true) { putString("lessoninfo", GSON.toJson(lessonInfoList)) }
         }
     }
 

@@ -3,7 +3,7 @@ package cn.plaso.liveclasssdkdemo
 import java.math.BigInteger
 import java.net.URLEncoder
 import java.nio.charset.Charset
-import java.nio.charset.StandardCharsets
+import java.util.Locale
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 
@@ -48,7 +48,7 @@ object SignHelper {
         mac.init(secretKey)
         val rst = mac.doFinal(encryptText.toByteArray(charset))
 
-        return BigInteger(1, rst).toString(16).toUpperCase()
+        return BigInteger(1, rst).toString(16).uppercase(Locale.ROOT)
 
     }
 

@@ -1,10 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string-array name="edit_element_mode">
+
+
+    <string-array name="appId_for_test">
+    </string-array>
+
+    <string-array name="appKey_for_test">
+    </string-array>
+
+    <string-array name="appId">
+    </string-array>
+
+
+    <string-array name="appKey">
+    </string-array>
+
+    <string-array name="env">
+        <item>www</item>
+    </string-array>
+    <string-array name="edit_element_mode_values">
         <item>0</item>
         <item>1</item>
         <item>3</item>
         <item>5</item>
         <item>7</item>
+    </string-array>
+
+    <string-array name="edit_element_mode_options">
+        <item>@string/edit_element_mode_point</item>
+        <item>@string/edit_element_mode_handwriting</item>
+        <item>@string/edit_element_mode_handwriting_text</item>
+        <item>@string/edit_element_mode_handwriting_shape</item>
+        <item>@string/edit_element_mode_handwriting_text_shape</item>
+    </string-array>
+
+    <string-array name="new_quiz_mode_options">
+        <item>@string/new_quiz_mode_not_supported</item>
+        <item>@string/new_quiz_mode_choice</item>
+        <item>@string/new_quiz_mode_fill_blank</item>
+        <item>@string/new_quiz_mode_choice_and_fill_blank</item>
     </string-array>
 </resources>

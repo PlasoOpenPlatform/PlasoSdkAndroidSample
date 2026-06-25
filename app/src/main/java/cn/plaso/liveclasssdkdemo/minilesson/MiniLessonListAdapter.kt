@@ -13,7 +13,6 @@ import androidx.recyclerview.widget.RecyclerView
 import cn.plaso.liveclasssdkdemo.DemoApp
 import cn.plaso.liveclasssdkdemo.R
 import com.bumptech.glide.Glide
-import org.w3c.dom.Text
 
 class MiniLessonListAdapter : RecyclerView.Adapter<MiniLessonListAdapter.VH>() {
 
@@ -46,21 +45,21 @@ class MiniLessonListAdapter : RecyclerView.Adapter<MiniLessonListAdapter.VH>() {
                     tvEdit.visibility = VISIBLE
                     tvDelete.visibility = VISIBLE
                     progressBar.visibility = GONE
-                    tvTag.text = "制作中"
+                    tvTag.text = itemView.context.getString(R.string.minilesson_status_editing)
                 }
                 RECORDED -> {
                     tvUpload.visibility = VISIBLE
                     tvEdit.visibility = GONE
                     tvDelete.visibility = VISIBLE
                     progressBar.visibility = GONE
-                    tvTag.text = "未上传"
+                    tvTag.text = itemView.context.getString(R.string.minilesson_status_recorded)
                 }
                 UPLOADED -> {
                     tvUpload.visibility = GONE
                     tvEdit.visibility = GONE
                     tvDelete.visibility = VISIBLE
                     progressBar.visibility = GONE
-                    tvTag.text = "已上传"
+                    tvTag.text = itemView.context.getString(R.string.minilesson_status_uploaded)
                 }
                 UPLOADING -> {
                     tvUpload.visibility = GONE
@@ -68,7 +67,7 @@ class MiniLessonListAdapter : RecyclerView.Adapter<MiniLessonListAdapter.VH>() {
                     tvDelete.visibility = VISIBLE
                     progressBar.visibility = VISIBLE
                     progressBar.progress = it.progress ?: 0
-                    tvTag.text = "上传中"
+                    tvTag.text = itemView.context.getString(R.string.minilesson_status_uploading)
                 }
 
             }

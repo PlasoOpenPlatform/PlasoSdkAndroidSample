@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    android:scrollbars="none">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            android:gravity="center"
+            android:text="@string/advanced_title"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            android:background="#FFF8E1"
+            android:padding="12dp"
+            android:text="@string/advanced_internal_hint"
+            android:textColor="#E65100"
+            android:textSize="13sp" />
+
+        <!-- 底层配置 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:text="@string/advanced_section_core"
+            android:textColor="@color/colorPrimary"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="120dp"
+                android:layout_height="wrap_content"
+                android:text="@string/advanced_rtc_vendor" />
+
+            <EditText
+                android:id="@+id/etRtcType"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/advanced_rtc_vendor_hint"
+                android:inputType="number" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="120dp"
+                android:layout_height="wrap_content"
+                android:text="@string/advanced_host_addr" />
+
+            <EditText
+                android:id="@+id/etHostAddr"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/advanced_host_addr_hint" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="120dp"
+                android:layout_height="wrap_content"
+                android:text="@string/advanced_log_level" />
+
+            <RadioGroup
+                android:id="@+id/rgLogLevel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <RadioButton
+                    android:id="@+id/rbLogDebug"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/log_level_d" />
+
+                <RadioButton
+                    android:id="@+id/rbLogInfo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/log_level_i" />
+
+                <RadioButton
+                    android:id="@+id/rbLogWarn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/log_level_w" />
+
+                <RadioButton
+                    android:id="@+id/rbLogError"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/log_level_e" />
+            </RadioGroup>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="120dp"
+                android:layout_height="wrap_content"
+                android:text="@string/advanced_end_remind_time" />
+
+            <EditText
+                android:id="@+id/etEndRemindTime"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/advanced_end_remind_time_hint"
+                android:inputType="number" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="120dp"
+                android:layout_height="wrap_content"
+                android:text="@string/advanced_stream_resolution" />
+
+            <RadioGroup
+                android:id="@+id/rgResolution"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <RadioButton
+                    android:id="@+id/rb720"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/resolution_1280_720" />
+
+                <RadioButton
+                    android:id="@+id/rb968"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/resolution_968_726" />
+            </RadioGroup>
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginBottom="16dp"
+            android:background="#EEEEEE" />
+
+        <!-- 测试开关 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:text="@string/advanced_section_test_switches"
+            android:textColor="@color/colorPrimary"
+            android:textStyle="bold" />
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/swUploadLog"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/advanced_upload_log_callback" />
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/swMeetingMode"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/advanced_meeting_mode" />
+
+        <LinearLayout
+            android:id="@+id/layoutMeetingPermission"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="120dp"
+                android:layout_height="wrap_content"
+                android:text="@string/advanced_meeting_permission" />
+
+            <EditText
+                android:id="@+id/etMeetingPermission"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/advanced_meeting_permission_hint"
+                android:inputType="number" />
+        </LinearLayout>
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/swLiveStreaming"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/advanced_mock_live_streaming" />
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/swEnableRecallMsg"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/enable_recall_msg" />
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/swEnableLiveclassSignRollcall"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/enable_liveclass_sign_rollcall" />
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/swMobileTeaching"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/advanced_mobile_teaching" />
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/swAuxiliaryCamera"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:text="@string/phoneauxiliarycamera" />
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/swRearCamera"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/advanced_force_rear_camera" />
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/swOfflineSign"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/advanced_enable_offline_sign" />
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/swShareBoard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/advanced_share_board_history" />
+
+        <Button
+            android:id="@+id/btnSave"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/save_config" />
+
+    </LinearLayout>
+</ScrollView>

@@ -1,0 +1,21 @@
+# Normalize text files to LF in the repository and working tree on checkout.
+* text=auto eol=lf
+
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.jks binary
+*.keystore binary
+*.jar binary
+*.so binary
+*.aar binary
+*.mp3 binary
+*.mp4 binary
+*.wav binary
+*.pdf binary

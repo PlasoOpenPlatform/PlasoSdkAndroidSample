@@ -1,593 +1,514 @@
 package cn.plaso.liveclasssdkdemo.liveclass
 
 import android.content.Context
-import android.content.SharedPreferences
+import android.content.Intent
 import android.os.Bundle
-import android.os.PersistableBundle
 import android.text.TextUtils
-import android.view.View
+import android.util.Log
 import android.view.View.GONE
 import android.view.View.VISIBLE
-import android.widget.AdapterView
 import android.widget.Button
 import android.widget.CheckBox
 import android.widget.CompoundButton
 import android.widget.EditText
-import android.widget.LinearLayout
-import android.widget.RadioButton
 import android.widget.RadioGroup
 import android.widget.Spinner
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SwitchCompat
+import androidx.core.content.edit
+import cn.plaso.data.LiveClassConfig.Companion.VD_1080P
+import cn.plaso.data.LiveClassConfig.Companion.VD_360P
+import cn.plaso.data.LiveClassConfig.Companion.VD_720P
+import cn.plaso.liveclasssdkdemo.AdvancedSettingsActivity
 import cn.plaso.liveclasssdkdemo.Config
 import cn.plaso.liveclasssdkdemo.DemoApp
 import cn.plaso.liveclasssdkdemo.R
+import cn.plaso.liveclasssdkdemo.SecretFeatureState
+import cn.plaso.liveclasssdkdemo.SecretTapReveal
 import cn.plaso.liveclasssdkdemo.SignHelper
+import cn.plaso.liveclasssdkdemo.config.AdvancedConfig
+import cn.plaso.liveclasssdkdemo.config.LiveClassSettings
+import cn.plaso.liveclasssdkdemo.forceLandscapeOnPhone
 import cn.plaso.upime.ClassConfig
+import cn.plaso.upime.ClassConfig.CAST
+import cn.plaso.upime.ClassConfig.QIANGDAQI
+import cn.plaso.upime.ClassConfig.RED_PACKET
+import cn.plaso.upime.ClassConfig.SMALL_BOARD
+import cn.plaso.upime.ClassConfig.TOUZI
+import cn.plaso.upime.ClassConfig.VIDEO_MARK
 import cn.plaso.upime.IBoardCallback
 import cn.plaso.upime.ILiveClassListener
 import cn.plaso.upime.UpimeBoard
 import cn.plaso.upime.UpimeBoardData
 import cn.plaso.upime.UpimeConfig
+import cn.plaso.upime.UpimeObject
 import cn.plaso.upime.UpimeParameter
-import cn.plaso.upime.WebviewObject
-import com.google.gson.Gson
 
 class LiveClassLaunchActivity : AppCompatActivity(), CompoundButton.OnCheckedChangeListener {
+    private val TAG = LiveClassLaunchActivity::class.java.simpleName
+    private val advancedSettingsReveal = SecretTapReveal()
 
-    private var meetingType: String = "video"
-    private var videoStream: Int = -1;
-    private var userType: String = "listener"
-    private var openFileMode = UpimeConfig.OPEN_FILE_MODE_WINDOW
-    private var enableLiveSign = false;
-    private var enableVote = false;
-    private var enableBlueTooth = false
-    private var enablePptInteract = false
-    private var undoSupport = false
-    private var useNewSmallBoard = false;
-    private var useMeetingMode = false;
-    private var supportSelect = true;
     private var teachToolTypes: Int = 0
     private var toolBoxItems: Int = 0
-    private var rtcType: Int = 2
-    private var sharedPreferences: SharedPreferences? = null
-    private var editor: SharedPreferences.Editor? = null
-    private var MEETING_ID: String = "meeting_id"
-    private var LOGIN_NAME: String = "login_name"
-    private var ONLINE_MODE: String = "online_mode"
-    private var MEETING_TYPE: String = "meeting_type"
-    private var VIDEO_STREAM: String = "video_stream"
-    private var ROLE: String = "role"
-    private var DIMISSION: String = "dimission"
-    private var resolution = "1280x720"
-    private var isPhoneTeachingMethod = false;
-    private var isResidentCamera = true;
-    private var isAuxiliaryCamera = true;
-    private var isNewPpt = false;
-    private var logLevel = UpimeParameter.INFO;
-    private var teachingList: MutableList<WebviewObject> = ArrayList(16)
-    private var supportNewQuiz: Boolean = false // 是否支持新版随堂测；
-    private var enableSaveBoard: Boolean = false // 是否支持保存板书
-    private var editElementMode: Int = 0  // 点擦为0， 对象擦：1（手写），3（手写+文本框），5（手写+图形），7（手写+文本框+图形）
-
     private lateinit var etMeetingId: EditText
     private lateinit var etName: EditText
-    private lateinit var rbSpeaker: RadioButton
-    private lateinit var rbAssistant: RadioButton
+    private lateinit var etClassName: EditText
     private lateinit var etOnlineMode: EditText
     private lateinit var etColor: EditText
-    private lateinit var rbListener: RadioButton
-    private lateinit var rgVideoDimension: RadioGroup
+    private lateinit var etEndTime: EditText
+    private lateinit var etRedPacketLimit: EditText
+    private lateinit var spEditModeBasic: Spinner
+    private lateinit var rgUserType: RadioGroup
+    private lateinit var rgMeetingType: RadioGroup
+    private lateinit var rgVideoDefinition: RadioGroup
+    private lateinit var rgOpenFileModeLive: RadioGroup
+    private lateinit var swResidentCam: SwitchCompat
+    private lateinit var swLowLatencyBasic: SwitchCompat
+    private lateinit var swHighlighterLive: SwitchCompat
+    private lateinit var swLocalFileLive: SwitchCompat
+    private lateinit var swPptInteract: SwitchCompat
+    private lateinit var swNewPpt: SwitchCompat
+    private lateinit var swUndo: SwitchCompat
+    private lateinit var swNewSmallBoard: SwitchCompat
+    private lateinit var spNewQuizMode: Spinner
+    private lateinit var swEnableStarShow: SwitchCompat
+    private lateinit var swHideRecordingIndicator: SwitchCompat
+    private lateinit var swShowStudentClassElapsedTime: SwitchCompat
+    private lateinit var swSaveBoard: SwitchCompat
+    private lateinit var swSelect: SwitchCompat
+    private lateinit var cbSignIn: CheckBox
+    private lateinit var cbVote: CheckBox
 
-    private var ids = arrayOf(
-        R.id.triangle_key,
-        R.id.rect_key,
-        R.id.ellipse_key,
-        R.id.line_key,
-        R.id.dashline_key,
-        R.id.square_key,
-        R.id.circle_key,
-        R.id.arror_key,
-        R.id.fanshaped_key,
-        R.id.parallelogram_key,
+    private val teachToolIds = arrayOf(
+        R.id.line_key, R.id.dashline_key, R.id.triangle_key,
+        R.id.rect_key, R.id.ellipse_key, R.id.square_key,
+        R.id.circle_key, R.id.arror_key, R.id.fanshaped_key, R.id.parallelogram_key
     )
-
-
-    enum class TeacherToolType(val value: Int) {
-        PureUpimeTeachToolTypeTRIANGLE(1 shl 0),
-        PureUpimeTeachToolTypeRECT(1 shl 1),
-        PureUpimeTeachToolTypeELLIPSE(1 shl 2),
-        PureUpimeTeachToolTypeLINE(1 shl 3),
-        PureUpimeTeachToolTypeDASHEDLINE(1 shl 4),
-        PureUpimeTeachToolTypeSQUARE(1 shl 5),
-        PureUpimeTeachToolTypeCIRCLE(1 shl 6),
-        PureUpimeTeachToolTypeARROR(1 shl 7),
-        PureUpimeTeachToolTypeFANSHAPED(1 shl 8),
-        PureUpimeTeachToolTypePARALLELOGRAM(1 shl 9),
-        PureUpimeTeachToolTypeAll(1023)
-    }
+    private val toolBoxIds = arrayOf(
+        R.id.class_test, R.id.timer_count, R.id.small_board,
+        R.id.red_packet, R.id.browser, R.id.responder, R.id.dice,
+        R.id.sc_signin, R.id.sc_vote
+    )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        forceLandscapeOnPhone()
         setContentView(R.layout.activity_liveclass_launch)
 
+        initViews()
+        loadConfigs()
+        setupListeners()
+    }
+
+    private fun initViews() {
+        etMeetingId = findViewById(R.id.etMeetingId)
         etName = findViewById(R.id.etName)
-        rbSpeaker = findViewById(R.id.rbSpeaker)
-        rbAssistant = findViewById(R.id.rbAssistant)
+        etClassName = findViewById(R.id.etClassName)
         etOnlineMode = findViewById(R.id.etOnlineMode)
         etColor = findViewById(R.id.etColor)
-        rbListener = findViewById(R.id.rbListener)
-        rgVideoDimension = findViewById(R.id.rgVideoDimension)
-        etMeetingId= findViewById<EditText>(R.id.etMeetingId)
+        etEndTime = findViewById(R.id.endTime)
+        etRedPacketLimit = findViewById(R.id.redPacketLimit)
+        spEditModeBasic = findViewById(R.id.spEditModeBasic)
+        rgUserType = findViewById(R.id.rgUserType)
+        rgMeetingType = findViewById(R.id.rgMeetingType)
+        rgVideoDefinition = findViewById(R.id.rgVideoDefinition)
+        rgOpenFileModeLive = findViewById(R.id.rgOpenFileModeLive)
+        swResidentCam = findViewById(R.id.resident_camera)
+        swLowLatencyBasic = findViewById(R.id.swLowLatencyBasic)
+        swHighlighterLive = findViewById(R.id.swHighlighterLive)
+        swLocalFileLive = findViewById(R.id.swLocalFileLive)
+        swPptInteract = findViewById(R.id.ppt_interact)
+        swNewPpt = findViewById(R.id.sc_new_ppt)
+        swUndo = findViewById(R.id.undo_support_switch)
+        swNewSmallBoard = findViewById(R.id.new_smallBoard)
+        spNewQuizMode = findViewById(R.id.spNewQuizMode)
+        swEnableStarShow = findViewById(R.id.sc_enable_star_show)
+        swHideRecordingIndicator = findViewById(R.id.sc_hide_recording_indicator)
+        swShowStudentClassElapsedTime = findViewById(R.id.sc_show_student_class_elapsed_time)
+        swSaveBoard = findViewById(R.id.sc_save_board)
+        swSelect = findViewById(R.id.selectSwitch)
+        cbSignIn = findViewById(R.id.sc_signin)
+        cbVote = findViewById(R.id.sc_vote)
+        toolBoxIds.forEach { findViewById<CheckBox>(it).setOnCheckedChangeListener(this) }
 
-        sharedPreferences = this.getSharedPreferences("default", Context.MODE_PRIVATE)
-        editor = sharedPreferences?.edit()
+        val btnAdvanced = findViewById<Button>(R.id.btnAdvanced)
+        btnAdvanced.visibility = if (SecretFeatureState.advancedSettingsRevealed) VISIBLE else GONE
+        btnAdvanced.setOnClickListener {
+            startActivity(Intent(this, AdvancedSettingsActivity::class.java))
+        }
 
-        openFileMode = intent.getIntExtra("OpenFileMode", UpimeConfig.OPEN_FILE_MODE_IMAGE)
-        toolBoxItems = intent.getIntExtra("ToolBoxItem", 0)
-        enableLiveSign = intent.getBooleanExtra("SupportSignIn", false)
-        enableVote = intent.getBooleanExtra("SupportVote", false)
-        var meettype = sharedPreferences?.getString(MEETING_TYPE, "video")
-        if ("video".equals(meettype)) {
-            findViewById<RadioGroup>(R.id.rgMeetingType).check(R.id.rbVideo)
-            meetingType = "video"
-            videoStream = sharedPreferences?.getInt(VIDEO_STREAM, -1) ?: -1
-            if (videoStream == 18) {
-                findViewById<SwitchCompat>(R.id.switchVideoStream).isChecked = true;
+        findViewById<TextView>(R.id.tvLiveClassTitle).setOnClickListener {
+            advancedSettingsReveal.onTap {
+                SecretFeatureState.advancedSettingsRevealed = true
+                btnAdvanced.visibility = VISIBLE
             }
+        }
+    }
+
+    private fun loadConfigs() {
+        etMeetingId.setText(DemoApp.sp.getString("last_meeting_id", ""))
+        etName.setText(DemoApp.sp.getString("last_user_name", ""))
+        if (TextUtils.isEmpty(etClassName.text)) {
+            etClassName.setText(R.string.default_class_name)
+        }
+        etOnlineMode.setText(AdvancedConfig.onlineMode.toString())
+        etColor.setText(AdvancedConfig.keyForColor)
+        etEndTime.setText("")
+        etRedPacketLimit.setText(AdvancedConfig.redPacketLimit.toString())
+
+        when (LiveClassSettings.userType) {
+            "speaker" -> rgUserType.check(R.id.rbSpeaker)
+            "assistant" -> rgUserType.check(R.id.rbAssistant)
+            "visitor" -> rgUserType.check(R.id.rbVisitor)
+            else -> rgUserType.check(R.id.rbListener)
+        }
+
+        if (LiveClassSettings.meetingType == "video") {
+            rgMeetingType.check(R.id.rbVideo)
         } else {
-            findViewById<RadioGroup>(R.id.rgMeetingType).check(R.id.rbAudio)
-            meetingType = "audio"
+            rgMeetingType.check(R.id.rbAudio)
         }
 
-        findViewById<RadioGroup>(R.id.rgMeetingType).setOnCheckedChangeListener { group, checkedId ->
-            when (checkedId) {
-                R.id.rbVideo -> {
-                    meetingType = "video"
-                    findViewById<SwitchCompat>(R.id.switchVideoStream).visibility = VISIBLE
-                }
-                R.id.rbAudio -> {
-                    meetingType = "audio"
-                    findViewById<SwitchCompat>(R.id.switchVideoStream).isChecked = false
-                    findViewById<SwitchCompat>(R.id.switchVideoStream).visibility = GONE
-                }
-            }
+        when (LiveClassSettings.videoDefinition) {
+            VD_1080P -> rgVideoDefinition.check(R.id.rbVD1080)
+            VD_720P -> rgVideoDefinition.check(R.id.rbVD720)
+            else -> rgVideoDefinition.check(R.id.rbVD360)
         }
 
-        val usertype = sharedPreferences?.getString(ROLE, "listener")
-        val rgUserType = findViewById<RadioGroup>(R.id.rgUserType)
-        if ("speaker".equals(usertype)) {
-            rgUserType.check(R.id.rbSpeaker)
-            userType = "speaker"
-        } else if ("assistant".equals(usertype)) {
-            rgUserType.check(R.id.rbAssistant)
-            userType = "assistant"
-        } else if ("visitor".equals(usertype)) {
-            rgUserType.check(R.id.rbVisitor)
-            userType = "visitor"
+        if (!SecretFeatureState.advancedSettingsRevealed) {
+            AdvancedConfig.resolution = "1280x720"
+        }
+        if (LiveClassSettings.openFileMode == UpimeConfig.OPEN_FILE_MODE_WINDOW) {
+            rgOpenFileModeLive.check(R.id.rbWindowLive)
+        } else {
+            rgOpenFileModeLive.check(R.id.rbImageLive)
         }
 
-        rgUserType.setOnCheckedChangeListener { group, checkedId ->
-            when (checkedId) {
-                R.id.rbSpeaker -> userType = "speaker"
-                R.id.rbListener -> userType = "listener"
-                R.id.rbAssistant -> userType = "assistant"
-                R.id.rbVisitor -> userType = "visitor"
-            }
+        swResidentCam.isChecked = LiveClassSettings.isResidentCamera
+        swLowLatencyBasic.isChecked = AdvancedConfig.lowLatencyClass
+        swHighlighterLive.isChecked = LiveClassSettings.supportHighlighter
+        swLocalFileLive.isChecked = LiveClassSettings.localFileSupport
+        swPptInteract.isChecked = LiveClassSettings.enablePptInteract
+        swNewPpt.isChecked = LiveClassSettings.useDxPptParse
+        DemoApp.newPPt = LiveClassSettings.useDxPptParse
+        swUndo.isChecked = LiveClassSettings.undoSupport
+        swNewSmallBoard.isChecked = LiveClassSettings.useNewSmallBoard
+        spNewQuizMode.setSelection(AdvancedConfig.newQuizMode.coerceIn(0, 3))
+        swEnableStarShow.isChecked = AdvancedConfig.enableStarShow
+        swHideRecordingIndicator.isChecked = AdvancedConfig.hideRecordingIndicator
+        swShowStudentClassElapsedTime.isChecked = AdvancedConfig.showStudentClassElapsedTime
+        swSaveBoard.isChecked = LiveClassSettings.enableSaveBoard
+        swSelect.isChecked = LiveClassSettings.supportSelect
+        cbSignIn.isChecked = LiveClassSettings.enableLiveSign
+        cbVote.isChecked = LiveClassSettings.enableVote
+        if (LiveClassSettings.hasToolBoxItems()) {
+            applyToolBoxMask(LiveClassSettings.toolBoxItems)
+        } else {
+            syncToolBoxItemsFromViews()
         }
+        val editModes = resources.getStringArray(R.array.edit_element_mode_values)
+        spEditModeBasic.setSelection(editModes.indexOf(LiveClassSettings.editElementMode.toString()).coerceAtLeast(0))
 
-        val res = sharedPreferences?.getString(DIMISSION, "1280x720");
-        val rgResolution = findViewById<RadioGroup>(R.id.rgResolution)
-        if ("1280x720".equals(res)) {
-            rgResolution.check(R.id.rb720)
-            resolution = "1280x720"
-        } /*else if ("1920x1080".equals(res)) {
-            rgResolution.check(R.id.rb1080)
-            resolution = "1920x1080"
-        }*/ else if ("968x762".equals(res)) {
-            rgResolution.check(R.id.rb968)
-            resolution = "968x762"
-        }
-
-        findViewById<Button>(R.id.btnEnterLiveClass).setOnClickListener {
-            launchLiveClass()
-        }
-
-        findViewById<SwitchCompat>(R.id.blue_tooth_link).setOnCheckedChangeListener { btn, isChecked ->
-            enableBlueTooth = isChecked
-        }
-
-        findViewById<SwitchCompat>(R.id.switchVideoStream).setOnCheckedChangeListener { buttonView, isChecked ->
-            videoStream = if (isChecked) 18 else -1
-        }
-
-        findViewById<SwitchCompat>(R.id.ppt_interact).setOnCheckedChangeListener { btn, isChecked ->
-            enablePptInteract = isChecked
-        }
-
-        findViewById<SwitchCompat>(R.id.undo_support_switch).setOnCheckedChangeListener { btn, isChecked ->
-            undoSupport = isChecked
-        }
-
-        findViewById<SwitchCompat>(R.id.new_smallBoard).setOnCheckedChangeListener { btn, isChecked ->
-            useNewSmallBoard = isChecked
-        }
-
-        findViewById<SwitchCompat>(R.id.selectSwitch).setOnCheckedChangeListener { btn, isChecked ->
-            supportSelect = isChecked
-        }
-        val teach_tool_switch = findViewById<SwitchCompat>(R.id.teach_tool_switch)
-        val layout_teach_tools = findViewById<LinearLayout>(R.id.layout_teach_tools)
-        teach_tool_switch.setOnCheckedChangeListener { btn, isChecked ->
-            layout_teach_tools.visibility = if (isChecked) VISIBLE else GONE
-            teachToolTypes = if (isChecked) TeacherToolType.PureUpimeTeachToolTypeAll.value else 0
-        }
-
-        val teaching_method = findViewById<SwitchCompat>(R.id.teaching_method)
-        val tv_auxiliary_cam = findViewById<TextView>(R.id.tv_auxiliary_cam)
-        val axuiliary_cam = findViewById<SwitchCompat>(R.id.axuiliary_cam)
-        teaching_method.setOnCheckedChangeListener { btn, isChecked ->
-            isPhoneTeachingMethod = isChecked;
-            tv_auxiliary_cam.visibility = if (isPhoneTeachingMethod) VISIBLE else GONE;
-            axuiliary_cam.visibility = if (isPhoneTeachingMethod) VISIBLE else GONE;
-        }
-
-        val resident_camera = findViewById<SwitchCompat>(R.id.resident_camera)
-        resident_camera.setOnCheckedChangeListener { btn, isChecked ->
-            isResidentCamera = isChecked;
-        }
-
-        axuiliary_cam.setOnCheckedChangeListener { btn, isChecked ->
-            isAuxiliaryCamera = isChecked;
-        }
-
-        findViewById<SwitchCompat>(R.id.sc_new_ppt).setOnCheckedChangeListener { btn, isChecked ->
-            isNewPpt = isChecked;
-            DemoApp.newPPt = isNewPpt
-        }
-
-        findViewById<SwitchCompat>(R.id.sc_log_level).setOnCheckedChangeListener { btn, isChecked ->
-            findViewById<RadioGroup>(R.id.rg_log_level).visibility = if (isChecked) VISIBLE else GONE;
-        }
-
-        findViewById<SwitchCompat>(R.id.sc_new_quiz).setOnCheckedChangeListener { btn, isChecked ->
-            supportNewQuiz = isChecked
-        }
-        findViewById<SwitchCompat>(R.id.sc_save_board).setOnCheckedChangeListener { btn, isChecked ->
-            enableSaveBoard = isChecked
-        }
-
-        editElementMode = resources.getStringArray(R.array.edit_element_mode)[findViewById<Spinner>(R.id.sp_edit_element_mode).selectedItemPosition].toInt()
-        findViewById<Spinner>(R.id.sp_edit_element_mode).onItemSelectedListener =
-            object : AdapterView.OnItemSelectedListener {
-                override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                    editElementMode = resources.getStringArray(R.array.edit_element_mode)[position].toInt()
-                }
-
-                override fun onNothingSelected(parent: AdapterView<*>?) {
-                    // Handle case where no item is selected if needed
-                }
-            }
-
-        initCheckBox()
-        initDefaultValue()
+        teachToolTypes = LiveClassSettings.teachToolTypes
+        applyTeachToolMask(teachToolTypes)
     }
 
-    fun onRadioButtonClicked(view: View) {
-        if (view is RadioButton) {
-            // Is the button now checked?
-            val checked = view.isChecked
+    private fun setupListeners() {
+        findViewById<Button>(R.id.btnEnterLiveClass).setOnClickListener { launchLiveClass() }
+    }
 
-            // Check which radio button was clicked
-            when (view.getId()) {
-                R.id.radio_error ->
-                    if (checked) {
-                        logLevel = UpimeParameter.ERROR;
-                    }
-                R.id.radio_warn ->
-                    if (checked) {
-                        logLevel = UpimeParameter.WARN;
-                    }
-                R.id.radio_info ->
-                    if (checked) {
-                        logLevel = UpimeParameter.INFO;
-                    }
-                R.id.radio_debug ->
-                    if (checked) {
-                        logLevel = UpimeParameter.DEBUG;
-                    }
-            }
+    private fun saveCurrentConfigs() {
+        val userRole = when (rgUserType.checkedRadioButtonId) {
+            R.id.rbSpeaker -> "speaker"
+            R.id.rbAssistant -> "assistant"
+            R.id.rbVisitor -> "visitor"
+            else -> "listener"
         }
-    }
+        LiveClassSettings.userType = userRole
+        LiveClassSettings.meetingType = if (rgMeetingType.checkedRadioButtonId == R.id.rbVideo) "video" else "audio"
+        LiveClassSettings.videoDefinition = when (rgVideoDefinition.checkedRadioButtonId) {
+            R.id.rbVD1080 -> VD_1080P
+            R.id.rbVD720 -> VD_720P
+            else -> VD_360P
+        }
+        LiveClassSettings.openFileMode = if (rgOpenFileModeLive.checkedRadioButtonId == R.id.rbWindowLive) {
+            UpimeConfig.OPEN_FILE_MODE_WINDOW
+        } else {
+            UpimeConfig.OPEN_FILE_MODE_IMAGE
+        }
+        AdvancedConfig.onlineMode = etOnlineMode.text.toString().toIntOrNull() ?: 1
+        AdvancedConfig.keyForColor = etColor.text.toString()
+        AdvancedConfig.redPacketLimit = etRedPacketLimit.text.toString().toIntOrNull() ?: 0
+        LiveClassSettings.isResidentCamera = swResidentCam.isChecked
+        AdvancedConfig.lowLatencyClass = swLowLatencyBasic.isChecked
+        LiveClassSettings.supportHighlighter = swHighlighterLive.isChecked
+        LiveClassSettings.localFileSupport = swLocalFileLive.isChecked
+        LiveClassSettings.enablePptInteract = swPptInteract.isChecked
+        LiveClassSettings.useDxPptParse = swNewPpt.isChecked
+        DemoApp.newPPt = swNewPpt.isChecked
+        LiveClassSettings.undoSupport = swUndo.isChecked
+        LiveClassSettings.useNewSmallBoard = swNewSmallBoard.isChecked
+        AdvancedConfig.newQuizMode = spNewQuizMode.selectedItemPosition
+        AdvancedConfig.enableStarShow = swEnableStarShow.isChecked
+        AdvancedConfig.hideRecordingIndicator = swHideRecordingIndicator.isChecked
+        AdvancedConfig.showStudentClassElapsedTime = swShowStudentClassElapsedTime.isChecked
+        LiveClassSettings.enableSaveBoard = swSaveBoard.isChecked
+        LiveClassSettings.supportSelect = swSelect.isChecked
+        LiveClassSettings.enableLiveSign = cbSignIn.isChecked
+        LiveClassSettings.enableVote = cbVote.isChecked
+        LiveClassSettings.teachToolTypes = teachToolTypes
+        syncToolBoxItemsFromViews()
+        val editModes = resources.getStringArray(R.array.edit_element_mode_values)
+        LiveClassSettings.editElementMode = editModes[spEditModeBasic.selectedItemPosition].toInt()
 
-    private fun initDefaultValue() {
-        etMeetingId.setText(sharedPreferences?.getString(MEETING_ID, ""))
-        findViewById<EditText>(R.id.etName).setText(sharedPreferences?.getString(LOGIN_NAME, ""))
-        findViewById<EditText>(R.id.etOnlineMode).setText(sharedPreferences?.getString(ONLINE_MODE, "1"))
-    }
-
-    private fun initCheckBox() {
-        findViewById<CheckBox>(R.id.triangle_key).setOnCheckedChangeListener(this)
-        findViewById<CheckBox>(R.id.rect_key).setOnCheckedChangeListener(this)
-        findViewById<CheckBox>(R.id.ellipse_key).setOnCheckedChangeListener(this)
-        findViewById<CheckBox>(R.id.line_key).setOnCheckedChangeListener(this)
-        findViewById<CheckBox>(R.id.dashline_key).setOnCheckedChangeListener(this)
-        findViewById<CheckBox>(R.id.square_key).setOnCheckedChangeListener(this)
-        findViewById<CheckBox>(R.id.circle_key).setOnCheckedChangeListener(this)
-        findViewById<CheckBox>(R.id.arror_key).setOnCheckedChangeListener(this)
-        findViewById<CheckBox>(R.id.fanshaped_key).setOnCheckedChangeListener(this)
-        findViewById<CheckBox>(R.id.parallelogram_key).setOnCheckedChangeListener(this)
+        DemoApp.sp.edit {
+            putString("last_meeting_id", etMeetingId.text.toString())
+                .putString("last_user_name", etName.text.toString())
+        }
     }
 
     private fun launchLiveClass() {
-        val parameter: UpimeParameter = UpimeParameter()
-        parameter.waterMark = "liveclassdemo"
-        parameter.logLevel = logLevel
-        parameter.appId = Config.appId
-        val path: String = this.getExternalFilesDir("logs")!!.path
-        parameter.logDir = path
-        DemoApp.upime.setUpimeParameter(parameter)
-        val hostaddr = findViewById<EditText>(R.id.hostaddr)
-        val etColor= findViewById<EditText>(R.id.etColor)
-        val remindTime= findViewById<EditText>(R.id.remindTime)
-        val redPacketLimit= findViewById<EditText>(R.id.redPacketLimit)
-        val etPermission= findViewById<EditText>(R.id.etPermission)
-
-        val query = getQuery()
-        if (query != null) {
-            val config = ClassConfig().also {
-                if (TextUtils.isEmpty(hostaddr.text)) {
-                    it.classURL = query
-                } else {
-                    it.classURL = hostaddr.text.toString() + "?" + query
-                }
-                it.host = Config.server
-
-                it.openFileMode = openFileMode
-                it.toolboxItems = toolBoxItems
-
-                val keyForColor = etColor.text.toString().trim()
-                if (!TextUtils.isEmpty(keyForColor)) {
-                    it.keyForColor = keyForColor
-                }
-                it.supportBlueToothConnect = enableBlueTooth
-                it.enableInteractPpt = enablePptInteract
-                it.teachToolTypes = teachToolTypes
-                it.supportUndo = undoSupport
-                it.useNewSmallBoard = useNewSmallBoard
-                it.enableLiveSign = enableLiveSign
-                it.enableVote = enableVote
-                it.supportSelect = supportSelect;
-                it.endRemindTime = remindTime.text.toString().toInt()
-                var limitnum = 0
-                if (!TextUtils.isEmpty(redPacketLimit.text?.toString())) {
-                    limitnum = redPacketLimit.text.toString().toInt()
-                }
-                if (limitnum > 0) {
-                    it.redPacketLimit = limitnum;
-                }
-                if (useMeetingMode && TextUtils.isDigitsOnly(etPermission.text.toString())) {
-                    it.defaultPermission = etPermission.text.toString().toInt()
-                }
-                if (isPhoneTeachingMethod) {
-                    it.mobileTeaching = true;
-                }
-                it.residentCamera = isResidentCamera;
-                it.auxiliaryCamera = isAuxiliaryCamera;
-                teachingList.add(
-                    WebviewObject(
-                        WebviewObject.TYPE_TEACH_MATERIAL,
-                        "http://www.baidu.com",
-                        "测试消息,打开百度"
-                    )
-                );
-                teachingList.add(
-                    WebviewObject(
-                        2,
-                        "http://www.bing.com",
-                        "测试消息,打开bing"
-                    )
-                );
-                it.webviewList = teachingList;
-                it.supportHighlighter = DemoApp.sp.getBoolean("supportHighlighter", false)
-                it.enableSaveBoard = enableSaveBoard
-            }
-            DemoApp.upime.launchLiveClass(config, object : ILiveClassListener {
-                override fun onLiveClassReady(upimeBoard: UpimeBoard?) {
-                    DemoApp.upimeBoard = upimeBoard
-                }
-
-                override fun onExited(exitCode: Int, mid: String) {
-                }
-
-                override fun onSkinChanged(skinId: Int) {
-                }
-
-                override fun onUpimeBoardSaved(
-                    p0: Context?,
-                    p1: UpimeBoardData?,
-                    p2: IBoardCallback?
-                ) {
-                    p2?.onSaveSuccess()
-                }
-
-            })
-        }
-    }
-
-    private fun getQuery(): String? {
         val meetingId = etMeetingId.text.toString()
-        if (TextUtils.isEmpty(meetingId)) {
-            etMeetingId.error = "meetingId is empty"
-            return null
-        }
-        editor?.putString(MEETING_ID, meetingId)
-
         val userName = etName.text.toString()
 
+        if (TextUtils.isEmpty(meetingId)) {
+            etMeetingId.error = getString(R.string.enter_meeting_number)
+            return
+        }
         if (TextUtils.isEmpty(userName)) {
-            etName.error = "loginName is empty"
-            return null
-        }
-        editor?.putString(LOGIN_NAME, userName)
-
-        var endTime = findViewById<EditText>(R.id.endTime)
-        val _endTime = endTime.text.toString().toInt()
-        if (_endTime > 0 && System.currentTimeMillis() / 1000 > _endTime) {
-            //TODO提示
-            endTime.error = "endTime needs to be greater than startTime"
-            return null
+            etName.error = getString(R.string.user_name)
+            return
         }
 
-        val onlineMode = etOnlineMode.text.toString()
+        saveCurrentConfigs()
 
-        if (TextUtils.isEmpty(onlineMode)) {
-            etName.error = "onlineMode is empty"
-            return null
+        // SDK 参数配置
+        val parameter = UpimeParameter().apply {
+            waterMark = "liveclassdemo"
+            waterMarkDynamic = true
+            waterMarkOpacity = 0.8
+            waterMarkSize = 32.0
+            logLevel = AdvancedConfig.logLevel
+            appId = Config.appId
+            logDir = getExternalFilesDir("logs")!!.path
         }
-        editor?.putString(ONLINE_MODE, onlineMode)
-        editor?.putString(MEETING_TYPE, meetingType)
-        editor?.putString(ROLE, userType)
+        DemoApp.upime.upimeParameter = parameter
 
-        val videoDimensionId = rgVideoDimension.checkedRadioButtonId
-        var sharpness = "10"
-        if (videoDimensionId == R.id.rb10) {
-            sharpness = "10"
-        } else if (videoDimensionId == R.id.rb20) {
-            sharpness = "20"
-        } else if (videoDimensionId == R.id.rb30) {
-            sharpness = "30"
+        val query = getQuery(meetingId, userName)
+        val normalizedToolBoxItems = toolBoxItems
+        val featureMask = buildFeatureMask(normalizedToolBoxItems)
+        val config = ClassConfig().apply {
+            classURL = if (TextUtils.isEmpty(AdvancedConfig.hostAddr)) query else "${AdvancedConfig.hostAddr}?$query"
+            host = Config.server
+            features = featureMask
+            keyForColor = AdvancedConfig.keyForColor
+            redPacketLimit = AdvancedConfig.redPacketLimit
+            endRemindTime = AdvancedConfig.endRemindTime
+            openFileMode = LiveClassSettings.openFileMode
+            toolboxItems = normalizedToolBoxItems
+            enableInteractPpt = LiveClassSettings.enablePptInteract
+            teachToolTypes = this@LiveClassLaunchActivity.teachToolTypes or requiredTeachToolTypes()
+            supportUndo = LiveClassSettings.undoSupport
+            useNewSmallBoard = LiveClassSettings.useNewSmallBoard
+            supportSelect = LiveClassSettings.supportSelect
+            residentCamera = LiveClassSettings.isResidentCamera
+            mobileTeaching = AdvancedConfig.mobileTeaching
+            auxiliaryCamera = AdvancedConfig.auxiliaryCamera
+            pptType = if (LiveClassSettings.useDxPptParse) UpimeObject.TYPE_DX_PPT else UpimeObject.TYPE_PPT
+            enableUploadLog = AdvancedConfig.enableUploadLog
+            enableRearCamera = AdvancedConfig.enableRearCamera
+            supportHighlighter = LiveClassSettings.supportHighlighter
+            supportLocalFile = LiveClassSettings.localFileSupport
+            enableSaveBoard = LiveClassSettings.enableSaveBoard
+            enableStarShow = AdvancedConfig.enableStarShow
+            enableRecallMsg = AdvancedConfig.enableRecallMsg
+            enableLiveclassSignRollcall = AdvancedConfig.enableLiveclassSignRollcall
+            enableVote = LiveClassSettings.enableVote
+            enableLiveSign = LiveClassSettings.enableLiveSign
+            enableLiveOfflineSign = AdvancedConfig.enableLiveOfflineSign
+            hideRecordingIndicator = AdvancedConfig.hideRecordingIndicator
+            showStudentClassElapsedTime = AdvancedConfig.showStudentClassElapsedTime
+            if (AdvancedConfig.useMeetingMode) {
+                defaultPermission = AdvancedConfig.meetingDefaultPermission
+            }
         }
 
-        val rgResolution = findViewById<RadioGroup>(R.id.rgResolution)
-        val resolutionId = rgResolution.checkedRadioButtonId
-        /*if (resolutionId == R.id.rb360) {
-            resolution = "480x360"
-        } else*/ if (resolutionId == R.id.rb720) {
-            resolution = "1280x720"
-        } /*else if (resolutionId == R.id.rb1080) {
-            resolution = "1920x1080"
-        } */ else if (resolutionId == R.id.rb968) {
-            resolution = "968x762"
+        if (AdvancedConfig.enableUploadLog) {
+            DemoApp.upime.addUploadLogListener { reason ->
+                Log.d(TAG, "onReportIssues reason: $reason")
+                true
+            }
         }
-        editor?.putString(DIMISSION, resolution)
 
-        val videoStream = if (meetingType == "video" && findViewById<SwitchCompat>(R.id.switchVideoStream).isChecked) 18 else -1
-        editor?.putInt(VIDEO_STREAM, videoStream)
+        DemoApp.upime.launchLiveClass(config, object : ILiveClassListener {
+            override fun onLiveClassReady(upimeBoard: UpimeBoard?) { DemoApp.upimeBoard = upimeBoard }
+            override fun onExited(exitCode: Int, meetingId: String) {}
+            override fun onSkinChanged(skinId: Int) {}
+            override fun onUpimeBoardSaved(p0: Context?, p1: UpimeBoardData?, p2: IBoardCallback?) { p2?.onSaveSuccess() }
+        })
+    }
 
+    private fun getQuery(meetingId: String, userName: String): String {
         val params = mutableMapOf<String, Any>().also {
             it["appId"] = Config.appId
             it["appType"] = "liveclassSDK"
             it["beginTime"] = System.currentTimeMillis() / 1000
-            if (endTime.text.toString().toInt() > 0) {
-                it["endTime"] = _endTime
-            }
-            it["mediaType"] = meetingType
+            it["mediaType"] = LiveClassSettings.meetingType
             it["meetingId"] = meetingId
-            it["meetingType"] = if (useMeetingMode) "meeting" else "public"
+            it["meetingType"] = if (AdvancedConfig.useMeetingMode) "meeting" else "public"
             it["loginName"] = userName
             it["userName"] = userName
-            it["userType"] = userType
+            it["userType"] = LiveClassSettings.userType
             it["validTime"] = 1080000
-            it["onlineMode"] = Integer.parseInt(onlineMode)
-            it["d_sharpness"] = sharpness
-            it["d_dimension"] = resolution
-            if (videoStream != -1) {
-                it["videoStream"] = videoStream
+            it["onlineMode"] = AdvancedConfig.onlineMode
+            val endTimeValue = etEndTime.text?.toString()?.trim()?.toLongOrNull()
+            if (endTimeValue != null && endTimeValue > 0) {
+                it["endTime"] = endTimeValue
             }
-            it["vendorType"] = rtcType
-            it["enableNewClassExam"] = if (supportNewQuiz)  1 else 0
-            it["d_enableObjectEraser"] = editElementMode
+            it["d_sharpness"] = LiveClassSettings.videoDefinition
+            it["d_dimension"] = if (SecretFeatureState.advancedSettingsRevealed) {
+                AdvancedConfig.resolution
+            } else {
+                "1280x720"
+            }
+            if (AdvancedConfig.liveStreaming) {
+                it["videoStream"] = 6
+                it["classOption"] = 16
+            }
+            it["vendorType"] = AdvancedConfig.rtcType
+            it["enableNewClassExam"] = AdvancedConfig.newQuizMode
+            it["d_enableObjectEraser"] = LiveClassSettings.editElementMode
+            it["d_lowLatencyClass"] = if (AdvancedConfig.lowLatencyClass) 1 else 0
+            it["topic"] = etClassName.text?.toString().orEmpty()
         }
-        var gson = Gson()
-        var info: String = gson.toJson(params)
-        editor?.putString("params", info)
-
-        editor?.apply()
         return SignHelper.sign(params, Config.appKey)
     }
 
-    override fun onCreate(savedInstanceState: Bundle?, persistentState: PersistableBundle?) {
-        super.onCreate(savedInstanceState, persistentState)
+    override fun onCheckedChanged(buttonView: CompoundButton?, isChecked: Boolean) {
+        val viewId = buttonView?.id ?: return
+        if (isRequiredTeachTool(viewId) && !isChecked) {
+            return
+        }
+        val teachToolType = toolTypeFor(viewId)
+        if (teachToolType != null) {
+            teachToolTypes = if (isChecked) teachToolTypes or teachToolType.value else teachToolTypes and teachToolType.value.inv()
+            teachToolTypes = teachToolTypes or requiredTeachToolTypes()
+            LiveClassSettings.teachToolTypes = teachToolTypes
+            return
+        }
+        if (viewId == R.id.sc_signin) {
+            LiveClassSettings.enableLiveSign = isChecked
+            return
+        }
+        if (viewId == R.id.sc_vote) {
+            LiveClassSettings.enableVote = isChecked
+            return
+        }
+        if (toolBoxItemFor(viewId) != null) {
+            syncToolBoxItemsFromViews()
+        }
     }
 
-    override fun onCheckedChanged(buttonView: CompoundButton?, isChecked: Boolean) {
-        when (buttonView?.id) {
-            ids[0] -> {
-                teachToolTypes = if (isChecked) {
-                    teachToolTypes?.or(TeacherToolType.PureUpimeTeachToolTypeTRIANGLE.value)!!
-                } else {
-                    teachToolTypes?.and(TeacherToolType.PureUpimeTeachToolTypeTRIANGLE.value.inv())!!;
-                }
-            }
-            ids[1] -> {
-                teachToolTypes = if (isChecked) {
-                    teachToolTypes?.or(TeacherToolType.PureUpimeTeachToolTypeRECT.value)!!
-                } else {
-                    teachToolTypes?.and(TeacherToolType.PureUpimeTeachToolTypeRECT.value.inv())!!;
-                }
-            }
-            ids[2] -> {
-                teachToolTypes = if (isChecked) {
-                    teachToolTypes?.or(TeacherToolType.PureUpimeTeachToolTypeELLIPSE.value)!!
-                } else {
-                    teachToolTypes?.and(TeacherToolType.PureUpimeTeachToolTypeELLIPSE.value.inv())!!;
-                }
-            }
-            ids[3] -> {
-                teachToolTypes = if (isChecked) {
-                    teachToolTypes?.or(TeacherToolType.PureUpimeTeachToolTypeLINE.value)!!
-                } else {
-                    teachToolTypes?.and(TeacherToolType.PureUpimeTeachToolTypeLINE.value.inv())!!;
-                }
-            }
-            ids[4] -> {
-                teachToolTypes = if (isChecked) {
-                    teachToolTypes?.or(TeacherToolType.PureUpimeTeachToolTypeDASHEDLINE.value)!!
-                } else {
-                    teachToolTypes?.and(TeacherToolType.PureUpimeTeachToolTypeDASHEDLINE.value.inv())!!;
-                }
-            }
-            ids[5] -> {
-                teachToolTypes = if (isChecked) {
-                    teachToolTypes?.or(TeacherToolType.PureUpimeTeachToolTypeSQUARE.value)!!
-                } else {
-                    teachToolTypes?.and(TeacherToolType.PureUpimeTeachToolTypeSQUARE.value.inv())!!;
-                }
-            }
+    private fun toolTypeFor(id: Int): UpimeConfig.TeacherToolType? {
+        return when (id) {
+            R.id.triangle_key -> UpimeConfig.TeacherToolType.PureUpimeTeachToolTypeTRIANGLE
+            R.id.rect_key -> UpimeConfig.TeacherToolType.PureUpimeTeachToolTypeRECT
+            R.id.ellipse_key -> UpimeConfig.TeacherToolType.PureUpimeTeachToolTypeELLIPSE
+            R.id.line_key -> UpimeConfig.TeacherToolType.PureUpimeTeachToolTypeLINE
+            R.id.dashline_key -> UpimeConfig.TeacherToolType.PureUpimeTeachToolTypeDASHEDLINE
+            R.id.square_key -> UpimeConfig.TeacherToolType.PureUpimeTeachToolTypeSQUARE
+            R.id.circle_key -> UpimeConfig.TeacherToolType.PureUpimeTeachToolTypeCIRCLE
+            R.id.arror_key -> UpimeConfig.TeacherToolType.PureUpimeTeachToolTypeARROR
+            R.id.fanshaped_key -> UpimeConfig.TeacherToolType.PureUpimeTeachToolTypeFANSHAPED
+            R.id.parallelogram_key -> UpimeConfig.TeacherToolType.PureUpimeTeachToolTypePARALLELOGRAM
+            else -> null
+        }
+    }
 
-            ids[6] -> {
-                teachToolTypes = if (isChecked) {
-                    teachToolTypes?.or(TeacherToolType.PureUpimeTeachToolTypeCIRCLE.value)!!
-                } else {
-                    teachToolTypes?.and(TeacherToolType.PureUpimeTeachToolTypeCIRCLE.value.inv())!!;
-                }
-            }
+    private fun toolBoxItemFor(id: Int): UpimeConfig.ToolBoxItem? {
+        return when (id) {
+            R.id.class_test -> UpimeConfig.ToolBoxItem.CLASS_TEST
+            R.id.timer_count -> UpimeConfig.ToolBoxItem.TIMER_COUNT
+            R.id.small_board -> UpimeConfig.ToolBoxItem.SMALL_BOARD
+            R.id.red_packet -> UpimeConfig.ToolBoxItem.RED_PACKET
+            R.id.browser -> UpimeConfig.ToolBoxItem.BROWSER
+            R.id.responder -> UpimeConfig.ToolBoxItem.RESPONDER
+            R.id.dice -> UpimeConfig.ToolBoxItem.DICE
+            else -> null
+        }
+    }
 
-            ids[7] -> {
-                teachToolTypes = if (isChecked) {
-                    teachToolTypes?.or(TeacherToolType.PureUpimeTeachToolTypeARROR.value)!!
-                } else {
-                    teachToolTypes?.and(TeacherToolType.PureUpimeTeachToolTypeARROR.value.inv())!!;
-                }
-            }
+    private fun applyTeachToolMask(mask: Int) {
+        val finalMask = mask or requiredTeachToolTypes()
+        teachToolTypes = finalMask
+        teachToolIds.forEach { id ->
+            val checkBox = findViewById<CheckBox>(id)
+            checkBox.setOnCheckedChangeListener(null)
+            val toolType = toolTypeFor(id)
+            checkBox.isChecked = toolType != null && (finalMask and toolType.value) != 0
+            checkBox.isEnabled = !isRequiredTeachTool(id)
+            checkBox.setOnCheckedChangeListener(this)
+        }
+    }
 
-            ids[8] -> {
-                teachToolTypes = if (isChecked) {
-                    teachToolTypes?.or(TeacherToolType.PureUpimeTeachToolTypeFANSHAPED.value)!!
-                } else {
-                    teachToolTypes?.and(TeacherToolType.PureUpimeTeachToolTypeFANSHAPED.value.inv())!!;
-                }
-            }
+    private fun requiredTeachToolTypes(): Int {
+        return UpimeConfig.TeacherToolType.PureUpimeTeachToolTypeLINE.value or
+            UpimeConfig.TeacherToolType.PureUpimeTeachToolTypeDASHEDLINE.value or
+            UpimeConfig.TeacherToolType.PureUpimeTeachToolTypeTRIANGLE.value or
+            UpimeConfig.TeacherToolType.PureUpimeTeachToolTypeRECT.value or
+            UpimeConfig.TeacherToolType.PureUpimeTeachToolTypeELLIPSE.value or
+            UpimeConfig.TeacherToolType.PureUpimeTeachToolTypeSQUARE.value or
+            UpimeConfig.TeacherToolType.PureUpimeTeachToolTypeCIRCLE.value
+    }
 
-            ids[9] -> {
-                teachToolTypes = if (isChecked) {
-                    teachToolTypes?.or(TeacherToolType.PureUpimeTeachToolTypePARALLELOGRAM.value)!!
-                } else {
-                    teachToolTypes?.and(TeacherToolType.PureUpimeTeachToolTypePARALLELOGRAM.value.inv())!!;
-                }
+    private fun isRequiredTeachTool(id: Int): Boolean {
+        return id == R.id.line_key ||
+            id == R.id.dashline_key ||
+            id == R.id.triangle_key ||
+            id == R.id.rect_key ||
+            id == R.id.ellipse_key ||
+            id == R.id.square_key ||
+            id == R.id.circle_key
+    }
+
+    private fun applyToolBoxMask(mask: Int) {
+        toolBoxItems = mask
+        toolBoxIds.forEach { id ->
+            val checkBox = findViewById<CheckBox>(id)
+            checkBox.setOnCheckedChangeListener(null)
+            val toolItem = toolBoxItemFor(id)
+            checkBox.isChecked = toolItem != null && (mask and toolItem.value) != 0
+            checkBox.setOnCheckedChangeListener(this)
+        }
+    }
+
+    private fun syncToolBoxItemsFromViews() {
+        var mask = 0
+        toolBoxIds.forEach { id ->
+            val toolItem = toolBoxItemFor(id) ?: return@forEach
+            if (findViewById<CheckBox>(id).isChecked) {
+                mask = mask or toolItem.value
             }
         }
+        toolBoxItems = mask
+        LiveClassSettings.toolBoxItems = toolBoxItems
+    }
+
+    private fun buildFeatureMask(toolBoxMask: Int): Int {
+        var mask = VIDEO_MARK or CAST
+        if ((toolBoxMask and UpimeConfig.ToolBoxItem.SMALL_BOARD.value) != 0) {
+            mask = mask or SMALL_BOARD
+        }
+        if ((toolBoxMask and UpimeConfig.ToolBoxItem.RED_PACKET.value) != 0) {
+            mask = mask or RED_PACKET
+        }
+        if ((toolBoxMask and UpimeConfig.ToolBoxItem.RESPONDER.value) != 0) {
+            mask = mask or QIANGDAQI
+        }
+        if ((toolBoxMask and UpimeConfig.ToolBoxItem.DICE.value) != 0) {
+            mask = mask or TOUZI
+        }
+        return mask
     }
 }
